@@ -9,10 +9,10 @@
     <style>
 
         #showMoreContainer {
-        text-align: center;
-        margin-top: 15px;
-        display: none;
-    }
+            text-align: center;
+            margin-top: 15px;
+            display: none;
+        }
 
         #showMoreContainer.visible {
             display: block !important;
@@ -419,26 +419,69 @@
             overflow: hidden;
         }
 
+        /* ===== ГРУППИРОВКА ТРАНЗАКЦИЙ ===== */
+        .transaction-group {
+            margin-bottom: 12px;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+            background: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            transition: box-shadow 0.3s;
+        }
+
+        .transaction-group:hover {
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+        }
+
+        .group-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            cursor: pointer;
+            background: #f8f9fa;
+            transition: all 0.2s;
+            user-select: none;
+        }
+
+        .group-header:hover {
+            background: #f0f2f5;
+        }
+
+        .group-header .group-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .group-body {
+            display: none;
+            padding: 0;
+            background: white;
+        }
+
+        .group-body .transaction-item:last-child {
+            border-bottom: none;
+        }
+
         .transaction-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 15px 20px;
+            padding: 10px 16px 10px 20px;
             border-bottom: 1px solid #f0f0f0;
             transition: background 0.2s;
         }
 
         .transaction-item:hover {
-            background: #f8f9fa;
-        }
-
-        .transaction-item:last-child {
-            border-bottom: none;
+            background: #fafafa;
         }
 
         .transaction-info {
             display: flex;
-            gap: 20px;
+            gap: 15px;
             align-items: center;
             flex-wrap: wrap;
         }
@@ -448,30 +491,36 @@
             font-size: 14px;
         }
 
-        .transaction-category {
-            background: #667eea20;
-            color: #667eea;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 14px;
-            font-weight: 500;
+        .transaction-amount.income {
+            color: #2ecc71;
         }
 
-        .transaction-description {
-            color: #555;
+        .transaction-amount.expense {
+            color: #e74c3c;
         }
-
-        .transaction-amount {
-            font-weight: bold;
-            font-size: 18px;
-        }
-
-        .transaction-amount.income { color: #2ecc71; }
-        .transaction-amount.expense { color: #e74c3c; }
 
         .transaction-actions {
             display: flex;
             gap: 8px;
+            align-items: center;
+        }
+
+        /* Адаптивность для группировки */
+        @media (max-width: 768px) {
+            .transaction-info {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 5px;
+            }
+
+            .group-header {
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+
+            .transaction-actions {
+                flex-wrap: wrap;
+            }
         }
 
         /* Диаграммы */
@@ -1144,7 +1193,6 @@
             if (tab === 'all') {
                 container = document.getElementById('transactionList');
                 allTransactions = transactions;
-                showAll = false;
                 renderTransactions(container, transactions, tab);
             } else {
                 container = document.getElementById(tab === 'income' ? 'incomeList' : 'expenseList');
@@ -1155,75 +1203,192 @@
         }
     }
 
-    // ===== ОТРИСОВКА ТРАНЗАКЦИЙ =====
+    // ===== ОТРИСОВКА ТРАНЗАКЦИЙ С ГРУППИРОВКОЙ =====
     function renderTransactions(container, transactions, tab) {
+        console.log('renderTransactions вызван:', {
+        tab,
+        showAll,
+        transactionsCount: transactions.length,
+        isAllTab: tab === 'all'
+        });
+
         container.innerHTML = '';
         const showMoreBtn = document.getElementById('showMoreContainer');
 
-        console.log('renderTransactions: tab=', tab, 'showAll=', showAll, 'transactions.length=', transactions.length);
-
-
-        if (!showMoreBtn) {
-            console.warn('Кнопка "Показать больше" не найдена!');
-            return;
-        }
-
         if (transactions.length === 0) {
             container.innerHTML = '<div style="padding: 20px; text-align: center; color: #888;">Нет операций за выбранный период</div>';
-            showMoreBtn.style.display = 'none';
+             if (showMoreBtn) {
+                showMoreBtn.style.display = 'none';
+                showMoreBtn.classList.remove('visible');
+            }
             return;
         }
 
-        let displayTransactions = transactions;
+        // ГРУППИРУЕМ ТРАНЗАКЦИИ ПО КАТЕГОРИЯМ
+        const grouped = {};
+        transactions.forEach(t => {
+            if (!grouped[t.category]) {
+                grouped[t.category] = [];
+            }
+            grouped[t.category].push(t);
+        });
 
-        if (tab === 'all') {
-            if (!showAll && transactions.length > 5) {
-                displayTransactions = transactions.slice(0, 5);
-                if (showMoreBtn) {
-                    showMoreBtn.style.setProperty('display', 'block', 'important');
-                    console.log('✅ Кнопка показана через setProperty!');
+        // Получаем список категорий, отсортированный по общей сумме (по убыванию)
+        const sortedCategories = Object.keys(grouped).sort((a, b) => {
+            const sumA = grouped[a].reduce((sum, t) => sum + t.amount, 0);
+            const sumB = grouped[b].reduce((sum, t) => sum + t.amount, 0);
+            return Math.abs(sumB) - Math.abs(sumA);
+        });
+
+        // ===== ЛОГИКА ПАГИНАЦИИ =====
+        const MAX_GROUPS = 5; // показываем 5 групп
+        let groupsToShow = sortedCategories;
+        let hasMoreGroups = false;
+
+        if (tab === 'all' && !showAll && sortedCategories.length > MAX_GROUPS) {
+            groupsToShow = sortedCategories.slice(0, MAX_GROUPS);
+            hasMoreGroups = true;
+        console.log(`Показываем ${MAX_GROUPS} из ${sortedCategories.length} групп`);
+        } else {
+            console.log(`Показываем все ${sortedCategories.length} групп`);
+        }
+
+        // Рендерим группы
+        groupsToShow.forEach(category => {
+            const allItems = grouped[category];
+            const total = allItems.reduce((sum, t) => sum + t.amount, 0);
+            const sign = total > 0 ? '+' : '';
+            const className = total > 0 ? 'income' : 'expense';
+            const color = getCategoryColor(category);
+
+            // Создаем контейнер группы
+            const groupDiv = document.createElement('div');
+            groupDiv.className = 'transaction-group';
+            groupDiv.style.cssText = `
+                margin-bottom: 12px;
+                border: 1px solid #e0e0e0;
+                border-radius: 10px;
+                overflow: hidden;
+                background: white;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            `;
+
+            // Заголовок группы
+            const header = document.createElement('div');
+            header.className = 'group-header';
+            header.style.cssText = `
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 12px 16px;
+                cursor: pointer;
+                background: #f8f9fa;
+                transition: background 0.2s;
+                border-left: 4px solid ${color};
+                user-select: none;
+            `;
+            header.onmouseover = () => { header.style.background = '#f0f2f5'; };
+            header.onmouseout = () => { header.style.background = '#f8f9fa'; };
+
+            // Информация о категории
+            const leftInfo = document.createElement('div');
+            leftInfo.style.cssText = `display: flex; align-items: center; gap: 12px; flex-wrap: wrap;`;
+            leftInfo.innerHTML = `
+                <span style="font-weight: 600; font-size: 16px; color: #333;">${category}</span>
+                <span style="font-size: 13px; color: #888;">(${allItems.length} записей)</span>
+            `;
+
+            // Сумма по категории
+            const totalSpan = document.createElement('span');
+            totalSpan.className = `transaction-amount ${className}`;
+            totalSpan.style.cssText = `font-weight: bold; font-size: 18px;`;
+            totalSpan.textContent = `${sign}${Math.abs(total).toFixed(2)} ₽`;
+
+            // Кнопка развернуть/свернуть
+            const toggleBtn = document.createElement('span');
+            toggleBtn.style.cssText = `font-size: 18px; transition: transform 0.3s; color: #888; margin-left: 10px;`;
+            toggleBtn.textContent = '▶';
+
+            const rightInfo = document.createElement('div');
+            rightInfo.style.cssText = `display: flex; align-items: center; gap: 10px;`;
+            rightInfo.appendChild(totalSpan);
+            rightInfo.appendChild(toggleBtn);
+
+            header.appendChild(leftInfo);
+            header.appendChild(rightInfo);
+
+            // Контейнер для транзакций внутри группы
+            const body = document.createElement('div');
+            body.className = 'group-body';
+            body.style.cssText = `display: none; padding: 0; background: white;`;
+
+            // Показываем ВСЕ транзакции в группе (внутри группы показываем всё)
+            allItems.forEach(t => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'transaction-item';
+                itemDiv.style.cssText = `
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    padding: 10px 16px 10px 20px;
+                    border-bottom: 1px solid #f0f0f0;
+                    transition: background 0.2s;
+                `;
+                itemDiv.onmouseover = () => { itemDiv.style.background = '#fafafa'; };
+                itemDiv.onmouseout = () => { itemDiv.style.background = 'white'; };
+
+                const date = new Date(t.date).toLocaleString('ru-RU');
+                const signT = t.amount > 0 ? '+' : '';
+                const classNameT = t.amount > 0 ? 'income' : 'expense';
+
+                itemDiv.innerHTML = `
+                    <div class="transaction-info" style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
+                        <span class="transaction-date" style="color: #888; font-size: 14px;">${date}</span>
+                        <span class="transaction-description" style="color: #555;">${t.description || ''}</span>
+                    </div>
+                    <div class="transaction-actions" style="display: flex; gap: 8px; align-items: center;">
+                        <span class="transaction-amount ${classNameT}" style="font-weight: bold; font-size: 16px;">${signT}${t.amount.toFixed(2)} ₽</span>
+                        <button class="btn btn-edit" onclick="startEdit(${t.id})" style="padding: 4px 10px; font-size: 12px;">Редактировать</button>
+                        <button class="btn btn-delete" onclick="deleteTransaction(${t.id})" style="padding: 4px 10px; font-size: 12px;">Удалить</button>
+                    </div>
+                `;
+                body.appendChild(itemDiv);
+            });
+
+            // Клик по заголовку для разворачивания
+            let isOpen = false;
+            header.onclick = () => {
+                isOpen = !isOpen;
+                body.style.display = isOpen ? 'block' : 'none';
+                toggleBtn.textContent = isOpen ? '▼' : '▶';
+                header.style.background = isOpen ? '#e8f0fe' : '#f8f9fa';
+            };
+
+            groupDiv.appendChild(header);
+            groupDiv.appendChild(body);
+            container.appendChild(groupDiv);
+        });
+
+        // ===== УПРАВЛЕНИЕ КНОПКОЙ "ПОКАЗАТЬ БОЛЬШЕ" =====
+        if (showMoreBtn) {
+            // Кнопка показывается ТОЛЬКО на вкладке "all"
+            if (tab === 'all') {
+                if (hasMoreGroups && !showAll) {
+                    showMoreBtn.style.display = 'block';
+                    showMoreBtn.classList.add('visible');
+                    console.log('Кнопка "Показать больше" ПОКАЗАНА! Групп:', sortedCategories.length, 'показано:', MAX_GROUPS);
+                } else {
+                    showMoreBtn.style.display = 'none';
+                    showMoreBtn.classList.remove('visible');
+                    console.log('Кнопка скрыта (all): showAll=', showAll, 'hasMoreGroups=', hasMoreGroups);
                 }
             } else {
-                if (showMoreBtn) {
-                    showMoreBtn.style.display = 'none';
-                }
+                // Для вкладок income и expense - кнопка всегда скрыта
+                // showMoreBtn.style.display = 'none';
+                // showMoreBtn.classList.remove('visible');
+                // console.log(`Кнопка скрыта (${tab} - не "all")`);
             }
         }
-<!--        if (tab === 'all') {-->
-<!--            if (!showAll && transactions.length > 5) {-->
-<!--                displayTransactions = transactions.slice(0, 5);-->
-<!--                showMoreBtn.style.display = 'block';-->
-<!--                console.log(`Показываем 5 из ${transactions.length} транзакций`);-->
-<!--            } else {-->
-<!--                showMoreBtn.style.display = 'none';-->
-<!--                console.log(`Показываем все ${transactions.length} транзакций`);-->
-<!--            }-->
-<!--        } else {-->
-<!--            showMoreBtn.style.display = 'none';-->
-<!--        }-->
-
-        displayTransactions.forEach(t => {
-            const div = document.createElement('div');
-            div.className = 'transaction-item';
-
-            const date = new Date(t.date).toLocaleString('ru-RU');
-            const sign = t.amount > 0 ? '+' : '';
-            const className = t.amount > 0 ? 'income' : 'expense';
-
-            div.innerHTML = `
-                <div class="transaction-info">
-                    <span class="transaction-date">${date}</span>
-                    <span class="transaction-category">${t.category}</span>
-                    <span class="transaction-description">${t.description || ''}</span>
-                    <span class="transaction-amount ${className}">${sign}${t.amount.toFixed(2)} ₽</span>
-                </div>
-                <div class="transaction-actions">
-                    <button class="btn btn-edit" onclick="startEdit(${t.id})">Редактировать</button>
-                    <button class="btn btn-delete" onclick="deleteTransaction(${t.id})">Удалить</button>
-                </div>
-            `;
-            container.appendChild(div);
-        });
     }
 
     // ===== ПОКАЗАТЬ ВСЕ ТРАНЗАКЦИИ =====
