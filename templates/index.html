@@ -32,7 +32,8 @@
             margin-top: 5px;
             z-index: 1000;
             box-shadow: 0 10px 40px rgba(0,0,0,0.15);
-            max-height: 300px;
+            max-height: 500px;
+<!--            max-height: 300px; чивапчичи-->
             overflow-y: auto;
         }
 
@@ -693,7 +694,7 @@
                         </button>
                     </div>
                     <!-- Выпадающая панель с категориями -->
-                    <div id="categoryPanel" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: white; border: 2px solid #667eea; border-radius: 12px; padding: 15px; margin-top: 5px; z-index: 1000; box-shadow: 0 10px 40px rgba(0,0,0,0.15); max-height: 300px; overflow-y: auto;">
+                    <div id="categoryPanel" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: white; border: 2px solid #667eea; border-radius: 12px; padding: 15px; margin-top: 5px; z-index: 1000; box-shadow: 0 10px 40px rgba(0,0,0,0.15); max-height: 400px; overflow-y: auto;">
                         <div style="display: flex; flex-wrap: wrap; gap: 8px;" id="categoryButtonsContainer">
                             <!-- Категории будут добавлены через JavaScript -->
                         </div>
@@ -815,58 +816,37 @@
     let allTransactions = [];
     let showAll = false;
 
-    // ===== КАТЕГОРИИ И ЦВЕТА (единый список для всех) =====
-<!--    const CATEGORIES = [-->
-<!--        { name: 'Продукты', color: '#e74c3c' },-->
-<!--        { name: 'Транспорт', color: '#f39c12' },-->
-<!--        { name: 'Жильё', color: '#2ecc71' },-->
-<!--        { name: 'Коммунальные', color: '#3498db' },-->
-<!--        { name: 'Зарплата', color: '#9b59b6' },-->
-<!--        { name: 'Фриланс', color: '#1abc9c' },-->
-<!--        { name: 'Развлечения', color: '#e67e22' },-->
-<!--        { name: 'Одежда', color: '#e91e63' },-->
-<!--        { name: 'Здоровье', color: '#00b894' },-->
-<!--        { name: 'Образование', color: '#0984e3' },-->
-<!--        { name: 'Подарки', color: '#fd79a8' },-->
-<!--        { name: 'Путешествия', color: '#6c5ce7' },-->
-<!--        { name: 'Рестораны', color: '#fdcb6e' },-->
-<!--        { name: 'Техника', color: '#00cec9' },-->
-<!--        { name: 'Дом', color: '#fab1a0' },-->
-<!--        { name: 'Косметика', color: '#fd79a8' },-->
-<!--        { name: 'Спорт', color: '#55efc4' },-->
-<!--        { name: 'Книги', color: '#74b9ff' },-->
-<!--        { name: 'Подписки', color: '#a29bfe' },-->
-<!--        { name: 'Другое', color: '#b2bec3' }-->
-<!--    ];-->
-
+    // ===== КАТЕГОРИИ И ЦВЕТА =====
     const INCOME_CATEGORIES = [
-        { name: 'Зарплата', color: '#9b59b6' },
-        { name: 'Фриланс', color: '#1abc9c' },
-        { name: 'Бонусы', color: '#f1c40f' },
-        { name: 'Инвестиции', color: '#2ecc71' },
-        { name: 'Подарки', color: '#fd79a8' },
-        { name: 'Возвраты', color: '#3498db' },
+        { name: 'Зарплата', color: '#2ecc71' },      // ярко-зеленый
+        { name: 'Фриланс', color: '#9b59b6' },        // фиолетовый
+        { name: 'Бонусы', color: '#1abc9c' },         // бирюзовый
+        { name: 'Инвестиции', color: '#3498db' },     // синий
+        { name: 'Подарки', color: '#a29bfe' },        // лавандовый
+        { name: 'Возвраты', color: '#00b894' },       // изумрудный
+        { name: 'Проценты', color: '#0984e3' },       // голубой
+        { name: 'Кэшбэк', color: '#55efc4' },         // мятный
         { name: 'Другое', color: '#b2bec3' }
     ];
 
     const EXPENSE_CATEGORIES = [
-        { name: 'Продукты', color: '#e74c3c' },
-        { name: 'Транспорт', color: '#f39c12' },
-        { name: 'Жильё', color: '#2ecc71' },
-        { name: 'Коммунальные', color: '#3498db' },
-        { name: 'Развлечения', color: '#e67e22' },
-        { name: 'Одежда', color: '#e91e63' },
-        { name: 'Здоровье', color: '#00b894' },
-        { name: 'Образование', color: '#0984e3' },
-        { name: 'Подарки', color: '#fd79a8' },
-        { name: 'Путешествия', color: '#6c5ce7' },
-        { name: 'Рестораны', color: '#fdcb6e' },
-        { name: 'Техника', color: '#00cec9' },
-        { name: 'Дом', color: '#fab1a0' },
-        { name: 'Косметика', color: '#fd79a8' },
-        { name: 'Спорт', color: '#55efc4' },
-        { name: 'Книги', color: '#74b9ff' },
-        { name: 'Подписки', color: '#a29bfe' },
+        { name: 'Продукты', color: '#e74c3c' },       // красный
+        { name: 'Транспорт', color: '#f39c12' },      // оранжевый
+        { name: 'Жильё', color: '#c0392b' },          // темно-красный
+        { name: 'Коммунальные', color: '#e67e22' },   // морковный
+        { name: 'Развлечения', color: '#e91e63' },    // розовый
+        { name: 'Одежда', color: '#fd79a8' },         // светло-розовый
+        { name: 'Здоровье', color: '#ff6b6b' },       // коралловый
+        { name: 'Образование', color: '#fdcb6e' },    // золотистый
+        { name: 'Подарки', color: '#ba6e9d' },        // розовый
+        { name: 'Путешествия', color: '#f1c40f' },    // желтый
+        { name: 'Рестораны', color: '#e17055' },      // терракотовый
+        { name: 'Техника', color: '#d63031' },        // кирпичный
+        { name: 'Дом', color: '#e17055' },            // терракотовый
+        { name: 'Косметика', color: '#fd79a8' },      // светло-розовый
+        { name: 'Спорт', color: '#fdcb6e' },          // песочный
+        { name: 'Книги', color: '#f39c12' },          // оранжевый
+        { name: 'Подписки', color: '#e17055' },       // терракотовый
         { name: 'Другое', color: '#b2bec3' }
     ];
 
