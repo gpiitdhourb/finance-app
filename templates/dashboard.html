@@ -181,6 +181,42 @@
                 </div>
             </div>
 
+            <div class="chart-card full-width">
+                <h3>Динамика баланса</h3>
+                <div class="chart-wrapper" style="height: 250px;" id="balanceChartWrapper">
+                    <canvas id="balanceChart"></canvas>
+                </div>
+            </div>
+            <div class="chart-card full-width">
+                <h3>Доходы и расходы по месяцам</h3>
+                <div class="chart-wrapper" style="height: 250px;" id="monthlyChartWrapper">
+                    <canvas id="monthlyChart"></canvas>
+                </div>
+            </div>
+
+            <!-- НОВЫЙ ГРАФИК: Топ категорий -->
+            <div class="chart-card">
+                <h3>Топ расходов</h3>
+                <div class="chart-wrapper" style="height: 250px;" id="topExpenseWrapper">
+                    <canvas id="topExpenseChart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-card">
+                <h3>Топ доходов</h3>
+                <div class="chart-wrapper" style="height: 250px;" id="topIncomeWrapper">
+                    <canvas id="topIncomeChart"></canvas>
+                </div>
+            </div>
+
+            <!-- НОВЫЙ ГРАФИК: Дни недели -->
+            <div class="chart-card full-width">
+                <h3>Средние траты по дням недели</h3>
+                <div class="chart-wrapper" style="height: 200px;" id="weekdayChartWrapper">
+                    <canvas id="weekdayChart"></canvas>
+                </div>
+            </div>
+
             <!-- Динамика доходов и расходов -->
             <div class="chart-card full-width">
                 <h3>Динамика доходов и расходов</h3>
@@ -196,6 +232,12 @@
         let incomeChartInstance = null;
         let expenseChartInstance = null;
         let trendChartInstance = null;
+        let balanceChartInstance = null;
+        let monthlyChartInstance = null;
+        let topExpenseChartInstance = null;
+        let topIncomeChartInstance = null;
+        let weekdayChartInstance = null;
+
 
         // ===== КАТЕГОРИИ С РАЗДЕЛЕНИЕМ ПО ТИПУ =====
         const INCOME_CATEGORIES = [
@@ -298,7 +340,7 @@
                     canvas1.style.display = 'none';
                     wrapper1.innerHTML += `
                         <div class="no-data">
-                            <div class="icon">📈</div>
+                            <div class="icon"></div>
                             <p>Нет доходов за выбранный период</p>
                         </div>
                     `;
@@ -353,7 +395,7 @@
                     canvas2.style.display = 'none';
                     wrapper2.innerHTML += `
                         <div class="no-data">
-                            <div class="icon">📉</div>
+                            <div class="icon"></div>
                             <p>Нет расходов за выбранный период</p>
                         </div>
                     `;
@@ -465,6 +507,227 @@
                         }
                     });
                 }
+
+                // 4. Динамика баланса
+                const balanceRes = await fetch(`/api/statistics/daily-balance?start_date=${startDate}&end_date=${endDate}`);
+                const balanceData = await balanceRes.json();
+
+                const ctx4 = document.getElementById('balanceChart').getContext('2d');
+                if (balanceChartInstance) balanceChartInstance.destroy();
+
+                if (balanceData.dates.length === 0) {
+                    showNoData('balanceChartWrapper');
+                } else {
+                    balanceChartInstance = new Chart(ctx4, {
+                        type: 'line',
+                        data: {
+                            labels: balanceData.dates,
+                            datasets: [{
+                                label: 'Баланс',
+                                data: balanceData.balance,
+                                borderColor: '#667eea',
+                                backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                                fill: true,
+                                tension: 0.4,
+                                pointRadius: 2
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: { display: false }
+                            },
+                            scales: {
+                                y: {
+                                    beginAtZero: true
+                                }
+                            }
+                        }
+                    });
+                }
+
+                // 5. Сравнение по месяцам
+                const monthlyRes = await fetch(`/api/statistics/monthly-comparison?start_date=${startDate}&end_date=${endDate}`);
+                const monthlyData = await monthlyRes.json();
+
+                const ctx5 = document.getElementById('monthlyChart').getContext('2d');
+                if (monthlyChartInstance) monthlyChartInstance.destroy();
+
+                if (monthlyData.months.length === 0) {
+                    showNoData('monthlyChartWrapper');
+                } else {
+                    monthlyChartInstance = new Chart(ctx5, {
+                        type: 'bar',
+                        data: {
+                            labels: monthlyData.months,
+                            datasets: [
+                                {
+                                    label: 'Доходы',
+                                    data: monthlyData.income,
+                                    backgroundColor: 'rgba(46, 204, 113, 0.7)',
+                                    borderColor: '#2ecc71',
+                                    borderWidth: 1
+                                },
+                                {
+                                    label: 'Расходы',
+                                    data: monthlyData.expense,
+                                    backgroundColor: 'rgba(231, 76, 60, 0.7)',
+                                    borderColor: '#e74c3c',
+                                    borderWidth: 1
+                                }
+                            ]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    position: 'top'
+                                }
+                            },
+                            scales: {
+                                y: {
+                                    beginAtZero: true
+                                }
+                            }
+                        }
+                    });
+                }
+
+                // 6. Топ расходов
+                const topExpenseRes = await fetch(`/api/statistics/top-categories?transaction_type=expense&limit=5&start_date=${startDate}&end_date=${endDate}`);
+                const topExpenseData = await topExpenseRes.json();
+
+                const ctx6 = document.getElementById('topExpenseChart').getContext('2d');
+                if (topExpenseChartInstance) topExpenseChartInstance.destroy();
+
+                if (topExpenseData.categories.length === 0) {
+                    showNoData('topExpenseWrapper');
+                } else {
+                    topExpenseChartInstance = new Chart(ctx6, {
+                        type: 'bar',
+                        data: {
+                            labels: topExpenseData.categories,
+                            datasets: [{
+                                label: 'Сумма',
+                                data: topExpenseData.amounts,
+                                backgroundColor: topExpenseData.categories.map(c => getCategoryColor(c) || '#e74c3c'),
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            indexAxis: 'y',
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: { display: false }
+                            },
+                            scales: {
+                                x: {
+                                    beginAtZero: true
+                                }
+                            }
+                        }
+                    });
+                }
+
+                // 7. Топ доходов
+                const topIncomeRes = await fetch(`/api/statistics/top-categories?transaction_type=income&limit=5&start_date=${startDate}&end_date=${endDate}`);
+                const topIncomeData = await topIncomeRes.json();
+
+                const ctx7 = document.getElementById('topIncomeChart').getContext('2d');
+                if (topIncomeChartInstance) topIncomeChartInstance.destroy();
+
+                if (topIncomeData.categories.length === 0) {
+                    showNoData('topIncomeWrapper');
+                } else {
+                    topIncomeChartInstance = new Chart(ctx7, {
+                        type: 'bar',
+                        data: {
+                            labels: topIncomeData.categories,
+                            datasets: [{
+                                label: 'Сумма',
+                                data: topIncomeData.amounts,
+                                backgroundColor: topIncomeData.categories.map(c => getCategoryColor(c) || '#2ecc71'),
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            indexAxis: 'y',
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: { display: false }
+                            },
+                            scales: {
+                                x: {
+                                    beginAtZero: true
+                                }
+                            }
+                        }
+                    });
+                }
+
+                // 8. Дни недели
+                const weekdayRes = await fetch(`/api/statistics/weekday-analysis?start_date=${startDate}&end_date=${endDate}`);
+                const weekdayData = await weekdayRes.json();
+
+                const ctx8 = document.getElementById('weekdayChart').getContext('2d');
+                if (weekdayChartInstance) weekdayChartInstance.destroy();
+
+                const hasWeekdayData = weekdayData.expense.some(v => v > 0);
+
+                if (!hasWeekdayData) {
+                    showNoData('weekdayChartWrapper');
+                } else {
+                    weekdayChartInstance = new Chart(ctx8, {
+                        type: 'bar',
+                        data: {
+                            labels: weekdayData.weekdays,
+                            datasets: [{
+                                label: 'Средние расходы',
+                                data: weekdayData.expense,
+                                backgroundColor: 'rgba(231, 76, 60, 0.7)',
+                                borderColor: '#e74c3c',
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: { display: false }
+                            },
+                            scales: {
+                                y: {
+                                    beginAtZero: true
+                                }
+                            }
+                        }
+                    });
+                }
+
+                // ===== ВСПОМОГАТЕЛЬНАЯ ФУНКЦИЯ (внутри loadDashboard) =====
+                function showNoData(wrapperId) {
+                    const wrapper = document.getElementById(wrapperId);
+                    if (!wrapper) return;
+
+                    // Удаляем все дочерние элементы, кроме canvas
+                    const canvas = wrapper.querySelector('canvas');
+                    wrapper.innerHTML = '';
+                    if (canvas) wrapper.appendChild(canvas);
+
+                    // Если нет данных, показываем сообщение
+                    if (canvas) canvas.style.display = 'none';
+                    wrapper.innerHTML += `
+                        <div class="no-data">
+                            <div class="icon">📊</div>
+                            <p>Нет данных</p>
+                        </div>
+                    `;
+                }
+
             } catch (error) {
                 console.error('Ошибка загрузки дашборда:', error);
             }

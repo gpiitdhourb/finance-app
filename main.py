@@ -585,6 +585,249 @@ def logout():
     return resp
 
 
+# ===================== НОВЫЕ ЭНДПОИНТЫ ДЛЯ ДАШБОРДА =====================
+
+@app.get("/api/statistics/daily-balance")
+def get_daily_balance(
+        start_date: Optional[str] = Query(None),
+        end_date: Optional[str] = Query(None),
+        db: Session = Depends(get_db),
+        current_user: User = Depends(get_current_user)
+):
+    """Динамика баланса по дням"""
+    query = db.query(Transaction).filter(
+        Transaction.user_id == current_user.id)
+
+    if start_date:
+        try:
+            start = datetime.strptime(start_date, "%Y-%m-%d")
+            query = query.filter(Transaction.date >= start)
+        except ValueError:
+            pass
+
+    if end_date:
+        try:
+            end = datetime.strptime(end_date, "%Y-%m-%d") + timedelta(days=1)
+            query = query.filter(Transaction.date < end)
+        except ValueError:
+            pass
+
+    transactions = query.order_by(Transaction.date.asc()).all()
+
+    # Вычисляем накопленный баланс
+    daily_balance = {}
+    balance = 0
+    for t in transactions:
+        balance += t.amount
+        date_key = t.date.strftime("%Y-%m-%d")
+        daily_balance[date_key] = balance
+
+    return {
+        "dates": list(daily_balance.keys()),
+        "balance": list(daily_balance.values())
+    }
+
+
+@app.get("/api/statistics/monthly-comparison")
+def get_monthly_comparison(
+        start_date: Optional[str] = Query(None),
+        end_date: Optional[str] = Query(None),
+        db: Session = Depends(get_db),
+        current_user: User = Depends(get_current_user)
+):
+    """Сравнение доходов и расходов по месяцам"""
+    query = db.query(Transaction).filter(
+        Transaction.user_id == current_user.id)
+
+    if start_date:
+        try:
+            start = datetime.strptime(start_date, "%Y-%m-%d")
+            query = query.filter(Transaction.date >= start)
+        except ValueError:
+            pass
+
+    if end_date:
+        try:
+            end = datetime.strptime(end_date, "%Y-%m-%d") + timedelta(days=1)
+            query = query.filter(Transaction.date < end)
+        except ValueError:
+            pass
+
+    transactions = query.all()
+
+    monthly_income = defaultdict(float)
+    monthly_expense = defaultdict(float)
+
+    for t in transactions:
+        month_key = t.date.strftime("%Y-%m")
+        if t.amount > 0:
+            monthly_income[month_key] += t.amount
+        else:
+            monthly_expense[month_key] += abs(t.amount)
+
+    all_months = sorted(
+        set(monthly_income.keys()) | set(monthly_expense.keys()))
+
+    return {
+        "months": all_months,
+        "income": [monthly_income.get(m, 0) for m in all_months],
+        "expense": [monthly_expense.get(m, 0) for m in all_months]
+    }
+
+
+@app.get("/api/statistics/weekday-analysis")
+def get_weekday_analysis(
+        start_date: Optional[str] = Query(None),
+        end_date: Optional[str] = Query(None),
+        db: Session = Depends(get_db),
+        current_user: User = Depends(get_current_user)
+):
+    """Анализ трат по дням недели"""
+    query = db.query(Transaction).filter(
+        Transaction.user_id == current_user.id)
+
+    if start_date:
+        try:
+            start = datetime.strptime(start_date, "%Y-%m-%d")
+            query = query.filter(Transaction.date >= start)
+        except ValueError:
+            pass
+
+    if end_date:
+        try:
+            end = datetime.strptime(end_date, "%Y-%m-%d") + timedelta(days=1)
+            query = query.filter(Transaction.date < end)
+        except ValueError:
+            pass
+
+    transactions = query.all()
+
+    weekdays = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']
+    weekday_expense = [0] * 7
+    weekday_income = [0] * 7
+    weekday_count = [0] * 7
+
+    for t in transactions:
+        wd = t.date.weekday()  # 0 = понедельник
+        weekday_count[wd] += 1
+        if t.amount > 0:
+            weekday_income[wd] += t.amount
+        else:
+            weekday_expense[wd] += abs(t.amount)
+
+    # Средние значения
+    avg_expense = [expense / count if count > 0 else 0 for expense, count in
+                   zip(weekday_expense, weekday_count)]
+    avg_income = [income / count if count > 0 else 0 for income, count in
+                  zip(weekday_income, weekday_count)]
+
+    return {
+        "weekdays": weekdays,
+        "income": avg_income,
+        "expense": avg_expense
+    }
+
+
+@app.get("/api/statistics/top-categories")
+def get_top_categories(
+        transaction_type: str = Query(..., description="income или expense"),
+        limit: int = Query(5, description="Количество категорий"),
+        start_date: Optional[str] = Query(None),
+        end_date: Optional[str] = Query(None),
+        db: Session = Depends(get_db),
+        current_user: User = Depends(get_current_user)
+):
+    """Топ N категорий по сумме"""
+    query = db.query(Transaction).filter(
+        Transaction.user_id == current_user.id)
+
+    if transaction_type == "income":
+        query = query.filter(Transaction.amount > 0)
+    else:
+        query = query.filter(Transaction.amount < 0)
+
+    if start_date:
+        try:
+            start = datetime.strptime(start_date, "%Y-%m-%d")
+            query = query.filter(Transaction.date >= start)
+        except ValueError:
+            pass
+
+    if end_date:
+        try:
+            end = datetime.strptime(end_date, "%Y-%m-%d") + timedelta(days=1)
+            query = query.filter(Transaction.date < end)
+        except ValueError:
+            pass
+
+    transactions = query.all()
+
+    # Группируем и суммируем
+    categories = defaultdict(float)
+    for t in transactions:
+        categories[t.category] += abs(t.amount)
+
+    # Сортируем и берем топ N
+    sorted_categories = sorted(categories.items(), key=lambda x: x[1],
+                               reverse=True)[:limit]
+
+    return {
+        "categories": [item[0] for item in sorted_categories],
+        "amounts": [item[1] for item in sorted_categories]
+    }
+
+
+@app.get("/api/statistics/summary-extended")
+def get_summary_extended(
+        start_date: Optional[str] = Query(None),
+        end_date: Optional[str] = Query(None),
+        db: Session = Depends(get_db),
+        current_user: User = Depends(get_current_user)
+):
+    """Расширенная сводка с дополнительной аналитикой"""
+    query = db.query(Transaction).filter(
+        Transaction.user_id == current_user.id)
+
+    if start_date:
+        try:
+            start = datetime.strptime(start_date, "%Y-%m-%d")
+            query = query.filter(Transaction.date >= start)
+        except ValueError:
+            pass
+
+    if end_date:
+        try:
+            end = datetime.strptime(end_date, "%Y-%m-%d") + timedelta(days=1)
+            query = query.filter(Transaction.date < end)
+        except ValueError:
+            pass
+
+    transactions = query.all()
+
+    total_income = sum(t.amount for t in transactions if t.amount > 0)
+    total_expense = sum(abs(t.amount) for t in transactions if t.amount < 0)
+
+    # Транзакций в день
+    days = 1
+    if start_date and end_date:
+        try:
+            start = datetime.strptime(start_date, "%Y-%m-%d")
+            end = datetime.strptime(end_date, "%Y-%m-%d")
+            days = (end - start).days + 1
+        except ValueError:
+            pass
+
+    return {
+        "total_income": total_income,
+        "total_expense": total_expense,
+        "balance": total_income - total_expense,
+        "transaction_count": len(transactions),
+        "avg_income_per_day": total_income / days if days > 0 else 0,
+        "avg_expense_per_day": total_expense / days if days > 0 else 0,
+        "days": days
+    }
+
+
 @app.get("/api/me")
 def get_me(current_user: User = Depends(get_current_user)):
     """Получить информацию о текущем пользователе"""
