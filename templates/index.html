@@ -658,7 +658,7 @@
                     <input type="text" id="description" placeholder="Краткое описание">
                 </div>
                 <div class="form-group">
-                    <label>📅 Дата</label>
+                    <label>Дата</label>
                     <input type="date" id="transactionDate" required>
                 </div>
                 <button type="submit" class="btn btn-primary">➕ Добавить</button>
@@ -803,6 +803,7 @@
         // Группируем категории по типу (доходы/расходы) или просто выводим все
         CATEGORIES.forEach(cat => {
             const btn = document.createElement('button');
+            btn.type = 'button';
             btn.className = 'category-btn';
             btn.style.cssText = `
                 padding: 8px 16px;
@@ -1085,8 +1086,8 @@
                     <span class="transaction-amount ${className}">${sign}${t.amount.toFixed(2)} ₽</span>
                 </div>
                 <div class="transaction-actions">
-                    <button class="btn btn-edit" onclick="startEdit(${t.id})">✏️</button>
-                    <button class="btn btn-delete" onclick="deleteTransaction(${t.id})">🗑️</button>
+                    <button class="btn btn-edit" onclick="startEdit(${t.id})">Редактировать</button>
+                    <button class="btn btn-delete" onclick="deleteTransaction(${t.id})">Удалить</button>
                 </div>
             `;
             container.appendChild(div);
