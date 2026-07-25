@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Вход - Финансовый учёт</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .login-container {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            max-width: 400px;
+            width: 100%;
+        }
+
+        .login-container h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .login-container .subtitle {
+            text-align: center;
+            color: #888;
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+            font-weight: 500;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .remember-me {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .remember-me input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .remember-me label {
+            color: #555;
+            cursor: pointer;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 12px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn:hover {
+            background: #5a67d8;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            margin-top: 10px;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .switch-mode {
+            text-align: center;
+            margin-top: 20px;
+            color: #888;
+        }
+
+        .switch-mode a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .switch-mode a:hover {
+            text-decoration: underline;
+        }
+
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            display: none;
+        }
+
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <h1>Финансовый учёт</h1>
+        <div class="subtitle">Войдите, чтобы продолжить</div>
+
+        <div id="errorMessage" class="error-message"></div>
+        <div id="successMessage" class="success-message"></div>
+
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="username">Логин</label>
+                <input type="text" id="username" placeholder="Введите логин" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Пароль</label>
+                <input type="password" id="password" placeholder="Введите пароль" required>
+            </div>
+            <div class="remember-me">
+                <input type="checkbox" id="remember" checked>
+                <label for="remember">Запомнить меня (30 дней)</label>
+            </div>
+            <button type="submit" class="btn">Войти</button>
+        </form>
+
+        <button id="showRegisterBtn" class="btn btn-secondary">Или зарегистрироваться</button>
+
+        <form id="registerForm" style="display: none; margin-top: 20px; border-top: 1px solid #eee; padding-top: 20px;">
+            <h3 style="text-align: center; color: #333; margin-bottom: 15px;">Регистрация</h3>
+            <div class="form-group">
+                <label for="regUsername">Логин</label>
+                <input type="text" id="regUsername" placeholder="Придумайте логин" required>
+            </div>
+            <div class="form-group">
+                <label for="regEmail">Email (необязательно)</label>
+                <input type="email" id="regEmail" placeholder="Ваш email">
+            </div>
+            <div class="form-group">
+                <label for="regPassword">Пароль</label>
+                <input type="password" id="regPassword" placeholder="Придумайте пароль" required>
+            </div>
+            <div class="form-group">
+                <label for="regAnimal">🐾 Ваше любимое животное (просто так) ((да, это обязательно))</label>
+                <input type="text" id="regAnimal" placeholder="Например: кошка, собака, дракон...">
+            </div>
+            <button type="submit" class="btn">Зарегистрироваться</button>
+            <button type="button" id="hideRegisterBtn" class="btn btn-secondary">Назад к входу</button>
+        </form>
+    </div>
+
+    <script>
+        const loginForm = document.getElementById('loginForm');
+        const registerForm = document.getElementById('registerForm');
+        const showRegisterBtn = document.getElementById('showRegisterBtn');
+        const hideRegisterBtn = document.getElementById('hideRegisterBtn');
+        const errorDiv = document.getElementById('errorMessage');
+        const successDiv = document.getElementById('successMessage');
+
+        function showError(msg) {
+            errorDiv.textContent = msg;
+            errorDiv.style.display = 'block';
+            successDiv.style.display = 'none';
+        }
+
+        function showSuccess(msg) {
+            successDiv.textContent = msg;
+            successDiv.style.display = 'block';
+            errorDiv.style.display = 'none';
+        }
+
+        function hideMessages() {
+            errorDiv.style.display = 'none';
+            successDiv.style.display = 'none';
+        }
+
+        // Показать форму регистрации
+        showRegisterBtn.addEventListener('click', () => {
+            loginForm.style.display = 'none';
+            showRegisterBtn.style.display = 'none';
+            registerForm.style.display = 'block';
+            hideMessages();
+        });
+
+        // Показать форму входа
+        hideRegisterBtn.addEventListener('click', () => {
+            registerForm.style.display = 'none';
+            loginForm.style.display = 'block';
+            showRegisterBtn.style.display = 'block';
+            hideMessages();
+        });
+
+        // Логин
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            hideMessages();
+
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const remember = document.getElementById('remember').checked;
+
+            const formData = new URLSearchParams();
+            formData.append('username', username);
+            formData.append('password', password);
+
+            try {
+                const response = await fetch(`/api/login-with-cookie?remember=${remember}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: formData
+                });
+
+                if (response.ok) {
+                    // Перенаправляем на главную
+                    window.location.href = '/';
+                } else {
+                    const data = await response.json();
+                    showError(data.detail || 'Ошибка входа');
+                }
+            } catch (error) {
+                showError('Ошибка соединения с сервером');
+            }
+        });
+
+        // Регистрация
+        registerForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            hideMessages();
+
+            const username = document.getElementById('regUsername').value;
+            const email = document.getElementById('regEmail').value;
+            const password = document.getElementById('regPassword').value;
+            const favorite_animal = document.getElementById('regAnimal').value;
+
+            const params = new URLSearchParams();
+            params.append('username', username);
+            if (email) params.append('email', email);
+            params.append('password', password);
+            if (favorite_animal) params.append('favorite_animal', favorite_animal);
+
+            try {
+                const response = await fetch('/api/register?' + params.toString(), {
+                    method: 'POST'
+                });
+
+                if (response.ok) {
+                    showSuccess('Регистрация успешна! Теперь войдите.');
+                    // Переключаем на форму входа
+                    registerForm.style.display = 'none';
+                    loginForm.style.display = 'block';
+                    showRegisterBtn.style.display = 'block';
+                    // Очищаем поля входа и подставляем логин
+                    document.getElementById('username').value = username;
+                    document.getElementById('password').value = '';
+                } else {
+                    const data = await response.json();
+                    showError(data.detail || 'Ошибка регистрации');
+                }
+            } catch (error) {
+                showError('Ошибка соединения с сервером');
+            }
+        });
+    </script>
+</body>
+</html>
