@@ -638,7 +638,7 @@
                 <div class="form-group" style="position: relative;">
                     <label>Категория</label>
                     <div style="display: flex; gap: 10px; align-items: center;">
-                        <input type="text" id="category" required placeholder="Начните вводить или выберите ниже" style="flex: 1;">
+                        <input type="text" id="category" required placeholder="Выберите категорию" style="flex: 1;">
                         <button type="button" id="categoryToggleBtn" class="btn btn-primary" style="padding: 10px 15px; font-size: 14px; white-space: nowrap;">
                             ▼ Выбрать
                         </button>
@@ -668,6 +668,7 @@
         <!-- Фильтр по периоду -->
         <div class="filter-section">
             <span style="font-weight: 500; color: #555;">📆 Период:</span>
+            <button class="filter-btn active" data-period="day">День</button>
             <button class="filter-btn active" data-period="week">Неделя</button>
             <button class="filter-btn" data-period="month">Месяц</button>
             <button class="filter-btn" data-period="year">Год</button>
@@ -766,13 +767,44 @@
     let showAll = false;
 
     // ===== КАТЕГОРИИ И ЦВЕТА (единый список для всех) =====
-    const CATEGORIES = [
+<!--    const CATEGORIES = [-->
+<!--        { name: 'Продукты', color: '#e74c3c' },-->
+<!--        { name: 'Транспорт', color: '#f39c12' },-->
+<!--        { name: 'Жильё', color: '#2ecc71' },-->
+<!--        { name: 'Коммунальные', color: '#3498db' },-->
+<!--        { name: 'Зарплата', color: '#9b59b6' },-->
+<!--        { name: 'Фриланс', color: '#1abc9c' },-->
+<!--        { name: 'Развлечения', color: '#e67e22' },-->
+<!--        { name: 'Одежда', color: '#e91e63' },-->
+<!--        { name: 'Здоровье', color: '#00b894' },-->
+<!--        { name: 'Образование', color: '#0984e3' },-->
+<!--        { name: 'Подарки', color: '#fd79a8' },-->
+<!--        { name: 'Путешествия', color: '#6c5ce7' },-->
+<!--        { name: 'Рестораны', color: '#fdcb6e' },-->
+<!--        { name: 'Техника', color: '#00cec9' },-->
+<!--        { name: 'Дом', color: '#fab1a0' },-->
+<!--        { name: 'Косметика', color: '#fd79a8' },-->
+<!--        { name: 'Спорт', color: '#55efc4' },-->
+<!--        { name: 'Книги', color: '#74b9ff' },-->
+<!--        { name: 'Подписки', color: '#a29bfe' },-->
+<!--        { name: 'Другое', color: '#b2bec3' }-->
+<!--    ];-->
+
+    const INCOME_CATEGORIES = [
+        { name: 'Зарплата', color: '#9b59b6' },
+        { name: 'Фриланс', color: '#1abc9c' },
+        { name: 'Бонусы', color: '#f1c40f' },
+        { name: 'Инвестиции', color: '#2ecc71' },
+        { name: 'Подарки', color: '#fd79a8' },
+        { name: 'Возвраты', color: '#3498db' },
+        { name: 'Другое', color: '#b2bec3' }
+    ];
+
+    const EXPENSE_CATEGORIES = [
         { name: 'Продукты', color: '#e74c3c' },
         { name: 'Транспорт', color: '#f39c12' },
         { name: 'Жильё', color: '#2ecc71' },
         { name: 'Коммунальные', color: '#3498db' },
-        { name: 'Зарплата', color: '#9b59b6' },
-        { name: 'Фриланс', color: '#1abc9c' },
         { name: 'Развлечения', color: '#e67e22' },
         { name: 'Одежда', color: '#e91e63' },
         { name: 'Здоровье', color: '#00b894' },
@@ -789,66 +821,160 @@
         { name: 'Другое', color: '#b2bec3' }
     ];
 
+    // Все категории для поиска и цветов
+    const ALL_CATEGORIES = [...INCOME_CATEGORIES, ...EXPENSE_CATEGORIES];
+
+
     // ===== ФУНКЦИЯ ДЛЯ ПОЛУЧЕНИЯ ЦВЕТА КАТЕГОРИИ =====
     function getCategoryColor(categoryName) {
-        const found = CATEGORIES.find(c => c.name === categoryName);
+        const found = ALL_CATEGORIES.find(c => c.name === categoryName);
         return found ? found.color : '#b2bec3';
     }
 
-// ===== ИНИЦИАЛИЗАЦИЯ ПАНЕЛИ КАТЕГОРИЙ =====
+    // ===== ИНИЦИАЛИЗАЦИЯ ПАНЕЛИ КАТЕГОРИЙ =====
     function initCategoryPanel() {
         const container = document.getElementById('categoryButtonsContainer');
         container.innerHTML = '';
 
-        // Группируем категории по типу (доходы/расходы) или просто выводим все
-        CATEGORIES.forEach(cat => {
-            const btn = document.createElement('button');
-            btn.type = 'button';
-            btn.className = 'category-btn';
-            btn.style.cssText = `
-                padding: 8px 16px;
-                border: none;
-                border-radius: 20px;
-                cursor: pointer;
-                font-size: 14px;
-                font-weight: 500;
-                color: white;
-                background: ${cat.color};
-                transition: all 0.2s;
-                box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            `;
-            btn.textContent = cat.name;
-            btn.onmouseover = () => {
-                btn.style.transform = 'scale(1.05)';
-                btn.style.boxShadow = '0 4px 12px rgba(0,0,0,0.2)';
-            };
-            btn.onmouseout = () => {
-                btn.style.transform = 'scale(1)';
-                btn.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
-            };
-            btn.onclick = () => {
-                document.getElementById('category').value = cat.name;
-                document.getElementById('categoryPanel').style.display = 'none';
-                // Подсвечиваем поле категории цветом
-                const input = document.getElementById('category');
-                input.style.borderColor = cat.color;
-                input.style.backgroundColor = cat.color + '20';
-                setTimeout(() => {
-                    input.style.borderColor = '';
-                    input.style.backgroundColor = '';
-                }, 2000);
-            };
-            container.appendChild(btn);
-        });
+        // Определяем, какая вкладка активна
+        const currentTab = document.querySelector('.tab-btn.active')?.dataset.tab || 'all';
 
-        // Поиск по категориям
+        // Выбираем категории в зависимости от вкладки
+        let categoriesToShow = ALL_CATEGORIES;
+        let incomeLabel = 'Доходы';
+        let expenseLabel = 'Расходы';
+
+        if (currentTab === 'income') {
+            categoriesToShow = INCOME_CATEGORIES;
+            incomeLabel = 'Доходы (все)';
+            expenseLabel = '';
+        } else if (currentTab === 'expense') {
+            categoriesToShow = EXPENSE_CATEGORIES;
+            incomeLabel = '';
+            expenseLabel = 'Расходы (все)';
+        }
+
+        // Функция для отрисовки группы категорий
+        function renderCategoryGroup(categories, label) {
+            if (!categories || categories.length === 0 || !label) return;
+
+            const groupTitle = document.createElement('div');
+            groupTitle.style.cssText = `
+                width: 100%;
+                font-size: 13px;
+                font-weight: 600;
+                color: #555;
+                margin: 8px 0 6px 0;
+                padding-bottom: 4px;
+                border-bottom: 2px solid #e0e0e0;
+            `;
+            groupTitle.textContent = label;
+            container.appendChild(groupTitle);
+
+            categories.forEach(cat => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'category-btn';
+                btn.style.cssText = `
+                    padding: 8px 16px;
+                    border: none;
+                    border-radius: 20px;
+                    cursor: pointer;
+                    font-size: 14px;
+                    font-weight: 500;
+                    color: white;
+                    background: ${cat.color};
+                    transition: all 0.2s;
+                    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+                `;
+                btn.textContent = cat.name;
+                btn.onmouseover = () => {
+                    btn.style.transform = 'scale(1.05)';
+                    btn.style.boxShadow = '0 4px 12px rgba(0,0,0,0.2)';
+                };
+                btn.onmouseout = () => {
+                    btn.style.transform = 'scale(1)';
+                    btn.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
+                };
+                btn.onclick = (e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+
+                    const input = document.getElementById('category');
+                    input.value = cat.name;
+                    document.getElementById('categoryPanel').style.display = 'none';
+
+                    input.style.borderColor = cat.color;
+                    input.style.backgroundColor = cat.color + '20';
+                    setTimeout(() => {
+                        input.style.borderColor = '';
+                        input.style.backgroundColor = '';
+                    }, 2000);
+                };
+                container.appendChild(btn);
+            });
+        }
+
+        // Рендерим группы
+        if (currentTab === 'all') {
+            // Показываем обе группы
+            renderCategoryGroup(INCOME_CATEGORIES, 'Доходы');
+            renderCategoryGroup(EXPENSE_CATEGORIES, 'Расходы');
+        } else if (currentTab === 'income') {
+            renderCategoryGroup(INCOME_CATEGORIES, 'Все доходы');
+        } else if (currentTab === 'expense') {
+            renderCategoryGroup(EXPENSE_CATEGORIES, 'Все расходы');
+        }
+
+        // Поиск по категориям (работает по всем категориям)
         document.getElementById('categorySearch').addEventListener('input', function() {
             const query = this.value.toLowerCase();
             const buttons = container.querySelectorAll('.category-btn');
+            const titles = container.querySelectorAll('div[style*="font-weight: 600"]');
+
+            // Сначала скрываем все заголовки
+            titles.forEach(title => {
+                title.style.display = 'none';
+            });
+
+            // Показываем только те кнопки, которые совпадают с поиском
+            let hasVisibleButtons = false;
             buttons.forEach(btn => {
                 const text = btn.textContent.toLowerCase();
-                btn.style.display = text.includes(query) ? 'inline-block' : 'none';
+                if (text.includes(query)) {
+                    btn.style.display = 'inline-block';
+                    hasVisibleButtons = true;
+                } else {
+                    btn.style.display = 'none';
+                }
             });
+
+            // Если есть видимые кнопки, показываем заголовки
+            if (hasVisibleButtons && query) {
+                // Показываем все заголовки, если есть результаты
+                titles.forEach(title => {
+                    // Проверяем, есть ли видимые кнопки в этой группе
+                    const nextSiblings = [];
+                    let sibling = title.nextSibling;
+                    while (sibling && sibling.tagName !== 'DIV') {
+                        if (sibling.tagName === 'BUTTON' && sibling.style.display !== 'none') {
+                            nextSiblings.push(sibling);
+                        }
+                        sibling = sibling.nextSibling;
+                    }
+                    if (nextSiblings.length > 0) {
+                        title.style.display = 'block';
+                    }
+                });
+            } else if (!query) {
+                // Если поиск пустой, показываем всё
+                titles.forEach(title => {
+                    title.style.display = 'block';
+                });
+                buttons.forEach(btn => {
+                    btn.style.display = 'inline-block';
+                });
+            }
         });
     }
 
@@ -903,7 +1029,10 @@
         const today = now.toISOString().split('T')[0];
         let startDate, endDate = today;
 
-        if (period === 'week') {
+        if (period === 'day') {
+            startDate = today;
+            endDate = today;
+        } else if (period === 'week') {
             const dayOfWeek = now.getDay();
             const diff = now.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
             const monday = new Date(now);
@@ -915,6 +1044,9 @@
         } else if (period === 'year') {
             const firstDay = new Date(now.getFullYear(), 0, 1);
             startDate = firstDay.toISOString().split('T')[0];
+        } else if (period === 'all') {
+            startDate = '2000-01-01';
+            endDate = today;
         } else if (period === 'custom') {
             startDate = document.getElementById('startDate').value;
             endDate = document.getElementById('endDate').value;
@@ -1303,6 +1435,8 @@
             document.getElementById('amount').value = '';
             document.getElementById('category').value = '';
             document.getElementById('description').value = '';
+
+            initCategoryPanel();
 
             // Обновляем диаграммы с текущим периодом
             const dateRange = getDateRange(currentPeriod);

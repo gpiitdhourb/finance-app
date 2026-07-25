@@ -197,14 +197,22 @@
         let expenseChartInstance = null;
         let trendChartInstance = null;
 
-        // ===== КАТЕГОРИИ И ЦВЕТА (единый список) =====
-        const CATEGORIES = [
+        // ===== КАТЕГОРИИ С РАЗДЕЛЕНИЕМ ПО ТИПУ =====
+        const INCOME_CATEGORIES = [
+            { name: 'Зарплата', color: '#9b59b6' },
+            { name: 'Фриланс', color: '#1abc9c' },
+            { name: 'Бонусы', color: '#f1c40f' },
+            { name: 'Инвестиции', color: '#2ecc71' },
+            { name: 'Подарки', color: '#fd79a8' },
+            { name: 'Возвраты', color: '#3498db' },
+            { name: 'Другое', color: '#b2bec3' }
+        ];
+
+        const EXPENSE_CATEGORIES = [
             { name: 'Продукты', color: '#e74c3c' },
             { name: 'Транспорт', color: '#f39c12' },
             { name: 'Жильё', color: '#2ecc71' },
             { name: 'Коммунальные', color: '#3498db' },
-            { name: 'Зарплата', color: '#9b59b6' },
-            { name: 'Фриланс', color: '#1abc9c' },
             { name: 'Развлечения', color: '#e67e22' },
             { name: 'Одежда', color: '#e91e63' },
             { name: 'Здоровье', color: '#00b894' },
@@ -221,8 +229,10 @@
             { name: 'Другое', color: '#b2bec3' }
         ];
 
+        const ALL_CATEGORIES = [...INCOME_CATEGORIES, ...EXPENSE_CATEGORIES];
+
         function getCategoryColor(categoryName) {
-            const found = CATEGORIES.find(c => c.name === categoryName);
+            const found = ALL_CATEGORIES.find(c => c.name === categoryName);
             return found ? found.color : '#b2bec3';
         }
 
