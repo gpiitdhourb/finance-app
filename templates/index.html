@@ -735,7 +735,7 @@
 
         <!-- Форма редактирования -->
         <div class="edit-form-container hidden" id="editFormContainer">
-            <h3>Редактировать операцию</h3>
+            <h3>✏️ Редактировать операцию</h3>
             <form id="editForm" class="edit-form-row">
                 <input type="hidden" id="editId">
                 <div class="form-group">
@@ -749,6 +749,11 @@
                 <div class="form-group">
                     <label>Описание</label>
                     <input type="text" id="editDescription">
+                </div>
+                <!-- НОВОЕ ПОЛЕ ДАТЫ -->
+                <div class="form-group">
+                    <label>Дата</label>
+                    <input type="date" id="editDate" required>
                 </div>
                 <button type="submit" class="btn btn-primary">Сохранить</button>
                 <button type="button" class="btn btn-danger" onclick="cancelEdit()">Отмена</button>
@@ -1662,21 +1667,36 @@
     async function startEdit(id) {
         editingId = id;
 
-        const response = await fetch(`/api/transactions/${id}`);
-        if (!response.ok) {
-            alert('Не удалось загрузить данные');
-            return;
+        try {
+            const response = await fetch(`/api/transactions/${id}`);
+            if (!response.ok) {
+                alert('Не удалось загрузить данные');
+                return;
+            }
+
+            const transaction = await response.json();
+
+            // Заполняем форму редактирования
+            document.getElementById('editId').value = transaction.id;
+            document.getElementById('editAmount').value = transaction.amount;
+            document.getElementById('editCategory').value = transaction.category;
+            document.getElementById('editDescription').value = transaction.description || '';
+
+            // Добавляем дату в форму редактирования
+            const editDateInput = document.getElementById('editDate');
+            if (editDateInput) {
+                // Преобразуем дату из формата ISO в YYYY-MM-DD
+                const dateObj = new Date(transaction.date);
+                const formattedDate = dateObj.toISOString().split('T')[0];
+                editDateInput.value = formattedDate;
+            }
+
+            document.getElementById('editFormContainer').classList.remove('hidden');
+            document.getElementById('editFormContainer').scrollIntoView({ behavior: 'smooth' });
+        } catch (error) {
+            console.error('Ошибка загрузки данных для редактирования:', error);
+            alert('Не удалось загрузить данные для редактирования');
         }
-
-        const transaction = await response.json();
-
-        document.getElementById('editId').value = transaction.id;
-        document.getElementById('editAmount').value = transaction.amount;
-        document.getElementById('editCategory').value = transaction.category;
-        document.getElementById('editDescription').value = transaction.description || '';
-
-        document.getElementById('editFormContainer').classList.remove('hidden');
-        document.getElementById('editFormContainer').scrollIntoView({ behavior: 'smooth' });
     }
 
     function cancelEdit() {
@@ -1696,22 +1716,35 @@
         const amount = parseFloat(document.getElementById('editAmount').value);
         const category = document.getElementById('editCategory').value;
         const description = document.getElementById('editDescription').value;
+        const editDate = document.getElementById('editDate').value; // <-- ДОБАВЛЯЕМ
+
+        // Проверяем, что дата выбрана
+        if (!editDate) {
+            alert('Пожалуйста, выберите дату!');
+            return;
+        }
 
         const params = new URLSearchParams();
         params.append('amount', amount);
         params.append('category', category);
         if (description) params.append('description', description);
+        params.append('date', editDate); // <-- ДОБАВЛЯЕМ ДАТУ
 
-        const response = await fetch(`/api/transactions/${editingId}?` + params.toString(), {
-            method: 'PUT'
-        });
+        try {
+            const response = await fetch(`/api/transactions/${editingId}?` + params.toString(), {
+                method: 'PUT'
+            });
 
-        if (response.ok) {
-            cancelEdit();
-            loadData();
-        } else {
-            const error = await response.json();
-            alert('Ошибка: ' + (error.detail || 'неизвестная ошибка'));
+            if (response.ok) {
+                cancelEdit();
+                loadData();
+            } else {
+                const error = await response.json();
+                alert('Ошибка: ' + (error.detail || 'неизвестная ошибка'));
+            }
+        } catch (error) {
+            console.error('Ошибка при обновлении:', error);
+            alert('Ошибка соединения с сервером');
         }
     });
 

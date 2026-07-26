@@ -220,6 +220,24 @@ def get_transactions(
     return transactions
 
 
+# ===================== ПОЛУЧЕНИЕ ОДНОЙ ТРАНЗАКЦИИ =====================
+@app.get("/api/transactions/{transaction_id}")
+def get_transaction(
+        transaction_id: int,
+        db: Session = Depends(get_db),
+        current_user: User = Depends(get_current_user)
+):
+    """Получить одну транзакцию по ID"""
+    transaction = db.query(Transaction).filter(
+        Transaction.id == transaction_id,
+        Transaction.user_id == current_user.id
+    ).first()
+
+    if not transaction:
+        raise HTTPException(status_code=404, detail="Транзакция не найдена")
+
+    return transaction
+
 # ===================== ЭНДПОИНТ ДЛЯ СТАТИСТИКИ С ФИЛЬТРАЦИЕЙ ПО ПЕРИОДУ =====================
 @app.get("/api/statistics/summary-filtered")
 def get_statistics_summary_filtered(
@@ -304,12 +322,13 @@ def update_transaction(
         amount: float,
         category: str,
         description: Optional[str] = "",
+        date: Optional[str] = None,
         db: Session = Depends(get_db),
         current_user: User = Depends(get_current_user)
 ):
     transaction = db.query(Transaction).filter(
         Transaction.id == transaction_id,
-        Transaction.user_id == current_user.id  # <-- ПРОВЕРКА
+        Transaction.user_id == current_user.id
     ).first()
     if not transaction:
         raise HTTPException(status_code=404, detail="Транзакция не найдена")
@@ -318,12 +337,18 @@ def update_transaction(
     transaction.category = category
     transaction.description = description
 
+    if date:
+        try:
+            transaction.date = datetime.strptime(date, "%Y-%m-%d")
+        except ValueError:
+            raise HTTPException(status_code=400,
+                                detail="Неверный формат даты. Используйте YYYY-MM-DD")
+
     db.commit()
     db.refresh(transaction)
     return {"status": "ok", "transaction": transaction}
 
-
-# DELETE /api/transactions/{id} - аналогично
+# DELETE /api/transactions/{id}
 @app.delete("/api/transactions/{transaction_id}")
 def delete_transaction(
         transaction_id: int,
