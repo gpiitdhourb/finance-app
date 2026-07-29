@@ -2311,6 +2311,12 @@
                 }
             }
 
+            if (transaction.event_id) {
+                selectEditEvent(transaction.event_id);  // <-- ВАЖНО: обновляем кастомный выбор
+            } else {
+                selectEditEvent(null);
+            }
+
             const editEventSelect = document.getElementById('editEventSelect');
             if (editEventSelect) {
                 editEventSelect.value = transaction.event_id || '';
@@ -2342,6 +2348,7 @@
         const category = document.getElementById('editCategory').value;
         const description = document.getElementById('editDescription').value;
         const editDate = document.getElementById('editDate').value;
+        const editEventId = document.getElementById('editEventSelect').value;
 
         // Проверяем, что дата выбрана
         if (!editDate) {
