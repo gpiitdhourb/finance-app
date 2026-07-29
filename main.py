@@ -34,6 +34,7 @@ class Transaction(Base):
     description = Column(String, nullable=True)
     date = Column(DateTime, default=datetime.utcnow)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    event_id = Column(Integer, ForeignKey("events.id"), nullable=True)
 
 
 # ===================== МОДЕЛЬ ПОЛЬЗОВАТЕЛЯ =====================
@@ -45,6 +46,20 @@ class User(Base):
     email = Column(String, unique=True, index=True, nullable=True)
     hashed_password = Column(String, nullable=False)
     favorite_animal = Column(String, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
+# ===================== МОДЕЛЬ СОБЫТИЙ=====================
+class Event(Base):
+    __tablename__ = "events"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, nullable=False)
+    description = Column(String, nullable=True)
+    color = Column(String, default="#667eea")
+    start_date = Column(DateTime, nullable=True)
+    end_date = Column(DateTime, nullable=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
 
 
@@ -241,14 +256,11 @@ def get_transaction(
 # ===================== ЭНДПОИНТ ДЛЯ СТАТИСТИКИ С ФИЛЬТРАЦИЕЙ ПО ПЕРИОДУ =====================
 @app.get("/api/statistics/summary-filtered")
 def get_statistics_summary_filtered(
-        start_date: Optional[str] = Query(None,
-                                          description="Дата начала YYYY-MM-DD"),
-        end_date: Optional[str] = Query(None,
-                                        description="Дата конца YYYY-MM-DD"),
+        start_date: Optional[str] = Query(None),
+        end_date: Optional[str] = Query(None),
         db: Session = Depends(get_db),
         current_user: User = Depends(get_current_user)
 ):
-    """Сводная статистика за период"""
     query = db.query(Transaction).filter(
         Transaction.user_id == current_user.id)
 
@@ -285,7 +297,8 @@ def add_transaction(
         amount: float,
         category: str,
         description: Optional[str] = "",
-        date: Optional[str] = None,  # <-- НОВЫЙ ПАРАМЕТР
+        date: Optional[str] = None,
+        event_id: Optional[int] = None,
         db: Session = Depends(get_db),
         current_user: User = Depends(get_current_user)
 ):
@@ -306,8 +319,9 @@ def add_transaction(
         amount=amount,
         category=category,
         description=description,
-        date=transaction_date,  # <-- ИСПОЛЬЗУЕМ УКАЗАННУЮ ДАТУ
-        user_id=current_user.id
+        date=transaction_date,
+        user_id=current_user.id,
+        event_id = event_id
     )
     db.add(new_trans)
     db.commit()
@@ -323,6 +337,7 @@ def update_transaction(
         category: str,
         description: Optional[str] = "",
         date: Optional[str] = None,
+        event_id: Optional[int] = None,
         db: Session = Depends(get_db),
         current_user: User = Depends(get_current_user)
 ):
@@ -336,6 +351,7 @@ def update_transaction(
     transaction.amount = amount
     transaction.category = category
     transaction.description = description
+    transaction.event_id = event_id
 
     if date:
         try:
@@ -852,6 +868,71 @@ def get_summary_extended(
         "days": days
     }
 
+# ===================== ПОЛУЧИТЬ ИНФОРМАЦИЮ О СОБЫТИИ =====================
+@app.get("/api/events/{event_id}")
+def get_event(
+    event_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    print(
+        f"🔍 Запрос события с ID: {event_id}, пользователь: {current_user.id}")
+
+    """Получить информацию о событии по ID"""
+    event = db.query(Event).filter(
+        Event.id == event_id,
+        Event.user_id == current_user.id
+    ).first()
+
+    print(f"📦 Результат: {event}")
+    if not event:
+        raise HTTPException(status_code=404, detail="Событие не найдено")
+    return event
+
+# ===================== ПОЛУЧИТЬ ВСЕ СОБЫТИЯ ПОЛЬЗОВАТЕЛЯ =====================
+@app.get("/api/events")
+def get_events(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Получить все события текущего пользователя"""
+    events = db.query(Event).filter(Event.user_id == current_user.id).all()
+    return events
+
+# Создать событие
+@app.post("/api/events")
+def create_event(
+    name: str,
+    description: Optional[str] = "",
+    color: Optional[str] = "#667eea",
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    new_event = Event(
+        name=name,
+        description=description,
+        color=color,
+        user_id=current_user.id
+    )
+    db.add(new_event)
+    db.commit()
+    db.refresh(new_event)
+    return {"status": "ok", "event": new_event}
+
+
+# ===================== ПОЛУЧИТЬ ТРАНЗАКЦИИ ПО СОБЫТИЮ =====================
+@app.get("/api/events/{event_id}/transactions")
+def get_event_transactions(
+    event_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Получить все транзакции, привязанные к событию"""
+    transactions = db.query(Transaction).filter(
+        Transaction.event_id == event_id,
+        Transaction.user_id == current_user.id
+    ).all()
+    return transactions
 
 @app.get("/api/me")
 def get_me(current_user: User = Depends(get_current_user)):
@@ -862,6 +943,43 @@ def get_me(current_user: User = Depends(get_current_user)):
         "email": current_user.email,
         "created_at": current_user.created_at
     }
+
+# ===================== СТРАНИЦЫ =====================
+@app.get("/events", response_class=HTMLResponse)
+def events_page(request: Request):
+    """Страница со списком событий"""
+    return templates.TemplateResponse("events.html", {"request": request})
+
+@app.get("/event/{event_id}", response_class=HTMLResponse)
+def event_page(request: Request, event_id: int):
+    """Страница конкретного события"""
+    return templates.TemplateResponse("event.html", {"request": request, "event_id": event_id})
+
+
+# ===================== УДАЛИТЬ СОБЫТИЕ =====================
+@app.delete("/api/events/{event_id}")
+def delete_event(
+        event_id: int,
+        db: Session = Depends(get_db),
+        current_user: User = Depends(get_current_user)
+):
+    """Удалить событие и отвязать все транзакции"""
+    event = db.query(Event).filter(
+        Event.id == event_id,
+        Event.user_id == current_user.id
+    ).first()
+
+    if not event:
+        raise HTTPException(status_code=404, detail="Событие не найдено")
+
+    # Отвязываем транзакции от события (устанавливаем event_id = NULL)
+    db.query(Transaction).filter(Transaction.event_id == event_id).update(
+        {Transaction.event_id: None}
+    )
+
+    db.delete(event)
+    db.commit()
+    return {"status": "ok", "message": "Событие удалено"}
 
 # ===================== ФРОНТЕНД =====================
 

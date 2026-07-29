@@ -171,6 +171,99 @@
             border-color: #667eea;
         }
 
+        /* ===== СТИЛИ ДЛЯ ВЫБОРА СОБЫТИЯ ===== */
+        select#eventSelect,
+        select#editEventSelect {
+            padding: 10px 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            width: 100%;
+            background: white url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23666' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 12px center;
+            background-size: 12px 8px;
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            cursor: pointer;
+            transition: border-color 0.3s, box-shadow 0.3s;
+            color: #333;
+            font-weight: 500;
+        }
+
+        select#eventSelect:hover,
+        select#editEventSelect:hover {
+            border-color: #667eea;
+        }
+
+        select#eventSelect:focus,
+        select#editEventSelect:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+        }
+
+        select#eventSelect option,
+        select#editEventSelect option {
+            padding: 8px 12px;
+            font-weight: 500;
+            background: white;
+            color: #333;
+        }
+
+        select#eventSelect option[value=""] {
+            color: #888;
+            font-weight: 400;
+        }
+
+        /* ===== ПОДПИСЬ К ВЫБОРУ СОБЫТИЯ ===== */
+        .event-select-label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 500;
+            color: #555;
+        }
+
+        .event-select-label .badge {
+            font-size: 12px;
+            background: #667eea20;
+            color: #667eea;
+            padding: 2px 8px;
+            border-radius: 12px;
+        }
+
+        /* ===== СТИЛИ ДЛЯ ВЫПАДАЮЩЕГО СПИСКА СОБЫТИЙ ===== */
+        #eventDropdown::-webkit-scrollbar,
+        #editEventDropdown::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        #eventDropdown::-webkit-scrollbar-track,
+        #editEventDropdown::-webkit-scrollbar-track {
+            background: #f0f2f5;
+            border-radius: 10px;
+        }
+
+        #eventDropdown::-webkit-scrollbar-thumb,
+        #editEventDropdown::-webkit-scrollbar-thumb {
+            background: #667eea;
+            border-radius: 10px;
+        }
+
+        #eventDropdown::-webkit-scrollbar-thumb:hover,
+        #editEventDropdown::-webkit-scrollbar-thumb:hover {
+            background: #5a67d8;
+        }
+
+        /* Адаптивность для мобильных */
+        @media (max-width: 768px) {
+            #eventSelectDisplay,
+            #editEventSelectDisplay {
+                min-height: 40px;
+                padding: 8px 12px;
+            }
+        }
+
         /* ===== СТИЛИ ДЛЯ ПОЛЯ ДАТЫ В ФОРМЕ ===== */
         input[type="date"] {
             padding: 10px;
@@ -582,7 +675,65 @@
             text-decoration: underline;
         }
 
-        /* Адаптивность */
+        /* ===== МОДАЛЬНОЕ ОКНО ===== */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            max-width: 450px;
+            width: 90%;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+
+        .modal-content h3 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .modal-content .form-group {
+            margin-bottom: 15px;
+        }
+
+        .modal-content .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #555;
+        }
+
+        .modal-content input[type="text"],
+        .modal-content input[type="color"] {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .modal-content input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .modal-content input[type="color"] {
+            height: 45px;
+            cursor: pointer;
+        }
+
         /* ===== АДАПТИВНОСТЬ ===== */
         @media (max-width: 768px) {
             .form-row {
@@ -636,7 +787,7 @@
                 font-size: 16px;
             }
         }
-       }
+    }
     </style>
 </head>
 <body>
@@ -644,7 +795,7 @@
         <!-- Шапка -->
         <div class="header">
             <h1>Финансовый учёт</h1>
-            <div class="subtitle">Управляй своими деньгами с умом</div>
+            <div class="subtitle">Чипи чипи чапа чапа</div>
         </div>
 
         <!-- Статистика -->
@@ -672,6 +823,15 @@
             <button class="tab-btn active" data-tab="all">Все</button>
             <button class="tab-btn" data-tab="income">Доходы</button>
             <button class="tab-btn" data-tab="expense">Расходы</button>
+        </div>
+
+        <div style="display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;">
+            <button class="btn btn-primary" onclick="openEventModal()" style="background: #2ecc71; padding: 10px 20px; border: none; border-radius: 8px; color: white; cursor: pointer; font-size: 14px;">
+                ➕ Создать событие
+            </button>
+            <a href="/events" class="btn btn-primary" style="background: #667eea; padding: 10px 20px; text-decoration: none; color: white; border-radius: 8px; font-size: 14px;">
+                📋 Все события
+            </a>
         </div>
 
         <!-- Форма добавления -->
@@ -711,6 +871,50 @@
                     <label>Дата</label>
                     <input type="date" id="transactionDate" required>
                 </div>
+                <div class="form-group">
+                    <label class="event-select-label">
+                        Событие
+                        <span class="badge" id="eventCountBadge">0</span>
+                    </label>
+                    <div style="position: relative;">
+                        <div id="eventSelectDisplay" style="
+                            display: flex;
+                            align-items: center;
+                            gap: 10px;
+                            padding: 10px 12px;
+                            border: 2px solid #e0e0e0;
+                            border-radius: 8px;
+                            cursor: pointer;
+                            background: white;
+                            transition: border-color 0.3s;
+                            min-height: 45px;
+                        ">
+                            <span style="color: #888;">Выберите событие</span>
+                        </div>
+                        <div id="eventDropdown" style="
+                            display: none;
+                            position: absolute;
+                            top: 100%;
+                            left: 0;
+                            right: 0;
+                            background: white;
+                            border: 2px solid #667eea;
+                            border-radius: 8px;
+                            margin-top: 4px;
+                            max-height: 200px;
+                            overflow-y: auto;
+                            z-index: 1000;
+                            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+                            padding: 8px;
+                        ">
+                            <div style="padding: 8px 12px; cursor: pointer; border-radius: 6px; transition: background 0.2s; color: #888;" onclick="selectEvent(null)">
+                                Без события
+                            </div>
+                            <!-- События будут добавлены через JavaScript -->
+                        </div>
+                        <input type="hidden" id="eventSelect" value="">
+                    </div>
+                </div>
                 <button type="submit" class="btn btn-primary">➕ Добавить</button>
             </form>
         </div>
@@ -735,7 +939,7 @@
 
         <!-- Форма редактирования -->
         <div class="edit-form-container hidden" id="editFormContainer">
-            <h3>✏️ Редактировать операцию</h3>
+            <h3>Редактировать операцию</h3>
             <form id="editForm" class="edit-form-row">
                 <input type="hidden" id="editId">
                 <div class="form-group">
@@ -750,10 +954,53 @@
                     <label>Описание</label>
                     <input type="text" id="editDescription">
                 </div>
-                <!-- НОВОЕ ПОЛЕ ДАТЫ -->
+                <!-- ПОЛЕ ДАТЫ -->
                 <div class="form-group">
                     <label>Дата</label>
                     <input type="date" id="editDate" required>
+                </div>
+                 <div class="form-group">
+                    <label class="event-select-label">
+                        Событие
+                        <span class="badge" id="editEventCountBadge">0</span>
+                    </label>
+                    <div style="position: relative;">
+                        <div id="editEventSelectDisplay" style="
+                            display: flex;
+                            align-items: center;
+                            gap: 10px;
+                            padding: 10px 12px;
+                            border: 2px solid #e0e0e0;
+                            border-radius: 8px;
+                            cursor: pointer;
+                            background: white;
+                            transition: border-color 0.3s;
+                            min-height: 45px;
+                        ">
+                            <span style="color: #888;">Выберите событие</span>
+                        </div>
+                        <div id="editEventDropdown" style="
+                            display: none;
+                            position: absolute;
+                            top: 100%;
+                            left: 0;
+                            right: 0;
+                            background: white;
+                            border: 2px solid #667eea;
+                            border-radius: 8px;
+                            margin-top: 4px;
+                            max-height: 200px;
+                            overflow-y: auto;
+                            z-index: 1000;
+                            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+                            padding: 8px;
+                        ">
+                            <div style="padding: 8px 12px; cursor: pointer; border-radius: 6px; transition: background 0.2s; color: #888;" onclick="selectEditEvent(null)">
+                                Без события
+                            </div>
+                        </div>
+                        <input type="hidden" id="editEventSelect" value="">
+                    </div>
                 </div>
                 <button type="submit" class="btn btn-primary">Сохранить</button>
                 <button type="button" class="btn btn-danger" onclick="cancelEdit()">Отмена</button>
@@ -820,6 +1067,9 @@
     let customEndDate = null;
     let allTransactions = [];
     let showAll = false;
+    let allEvents = [];
+    let editEventId = null;
+    let currentEventId = null;
 
     // ===== КАТЕГОРИИ И ЦВЕТА =====
     const INCOME_CATEGORIES = [
@@ -1275,6 +1525,14 @@
             header.onmouseover = () => { header.style.background = '#f0f2f5'; };
             header.onmouseout = () => { header.style.background = '#f8f9fa'; };
 
+            // В заголовке группы, после названия категории:
+            const eventNames = [...new Set(allItems.map(t => {
+                const event = allEvents.find(e => e.id === t.event_id);
+                return event ? event.name : null;
+            }).filter(Boolean))];
+
+            const eventLabel = eventNames.length > 0 ? `${eventNames.join(', ')}` : '';
+
             // Информация о категории
             const leftInfo = document.createElement('div');
             leftInfo.style.cssText = `display: flex; align-items: center; gap: 12px; flex-wrap: wrap;`;
@@ -1326,10 +1584,22 @@
                 const signT = t.amount > 0 ? '+' : '';
                 const classNameT = t.amount > 0 ? 'income' : 'expense';
 
+                // Находим событие для этой транзакции
+                let eventName = '';
+                let eventColor = '#667eea';
+                if (t.event_id) {
+                    const foundEvent = allEvents.find(e => e.id === t.event_id);
+                    if (foundEvent) {
+                        eventName = foundEvent.name;
+                        eventColor = foundEvent.color || '#667eea';
+                    }
+                }
+
                 itemDiv.innerHTML = `
                     <div class="transaction-info" style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
                         <span class="transaction-date" style="color: #888; font-size: 14px;">${date}</span>
                         <span class="transaction-description" style="color: #555;">${t.description || ''}</span>
+                        ${eventName ? `<span style="background: ${eventColor}20; color: ${eventColor}; padding: 2px 10px; border-radius: 12px; font-size: 12px; font-weight: 500;">${eventName}</span>` : ''}
                     </div>
                     <div class="transaction-actions" style="display: flex; gap: 8px; align-items: center;">
                         <span class="transaction-amount ${classNameT}" style="font-weight: bold; font-size: 16px;">${signT}${t.amount.toFixed(2)} ₽</span>
@@ -1604,6 +1874,13 @@
         const category = document.getElementById('category').value;
         const description = document.getElementById('description').value;
         const transactionDate = document.getElementById('transactionDate').value;
+        const eventId = document.getElementById('eventSelect').value; // <-- ВНУТРИ ФУНКЦИИ!
+
+        // ЛОГИ ДЛЯ ОТЛАДКИ (ВНУТРИ ФУНКЦИИ)
+        console.log('🔍 Добавление транзакции:');
+        console.log('  eventId:', eventId);
+        console.log('  amount:', amount);
+        console.log('  category:', category);
 
         if (isNaN(amount)) {
             alert('⚠️ Пожалуйста, введите число!');
@@ -1630,7 +1907,6 @@
             }
         } else if (currentTab === 'expense') {
             if (amount > 0) {
-                // alert(' В разделе "Расходы" указывайте положительную сумму!\n(Она будет автоматически преобразована в расход)');
                 amount = -Math.abs(amount);
                 document.getElementById('amount').value = amount;
             }
@@ -1641,6 +1917,9 @@
         params.append('category', category);
         if (description) params.append('description', description);
         if (transactionDate) params.append('date', transactionDate);
+        if (eventId && eventId !== '') params.append('event_id', eventId);
+
+        console.log('Отправка params:', params.toString());
 
         try {
             const response = await fetch('/api/transactions?' + params.toString(), {
@@ -1663,6 +1942,347 @@
         }
     });
 
+    // ===== ЗАГРУЗКА СОБЫТИЙ =====
+    async function loadEvents() {
+        try {
+            const response = await fetch('/api/events');
+            if (response.ok) {
+                allEvents = await response.json();
+                updateEventSelects();
+            }
+        } catch (error) {
+            console.error('Ошибка загрузки событий:', error);
+        }
+    }
+
+    // ===== СОЗДАНИЕ СОБЫТИЯ (из модального окна) =====
+    async function createEvent(eventData) {
+        try {
+            const params = new URLSearchParams();
+            params.append('name', eventData.name);
+            if (eventData.description) params.append('description', eventData.description);
+            if (eventData.color) params.append('color', eventData.color);
+
+            const response = await fetch('/api/events?' + params.toString(), {
+                method: 'POST'
+            });
+
+            if (response.ok) {
+                await loadEvents();
+                return true;
+            } else {
+                const error = await response.json();
+                alert('Ошибка: ' + (error.detail || 'неизвестная ошибка'));
+                return false;
+            }
+        } catch (error) {
+            console.error('Ошибка создания события:', error);
+            alert('Ошибка соединения с сервером');
+            return false;
+        }
+    }
+
+    // ===== ОТКРЫТЬ МОДАЛЬНОЕ ОКНО =====
+    function openEventModal() {
+        document.getElementById('eventModal').style.display = 'flex';
+    }
+
+    // ===== ЗАКРЫТЬ МОДАЛЬНОЕ ОКНО =====
+    function closeEventModal() {
+        document.getElementById('eventModal').style.display = 'none';
+        document.getElementById('eventName').value = '';
+        document.getElementById('eventDescription').value = '';
+    }
+
+    // ===== СОЗДАНИЕ СОБЫТИЯ =====
+    async function createEventFromModal() {
+        const name = document.getElementById('eventName').value.trim();
+        const description = document.getElementById('eventDescription').value.trim();
+        const color = document.getElementById('eventColor').value;
+
+        if (!name) {
+            alert('Введите название события!');
+            return;
+        }
+
+        console.log('📝 Создание события:', { name, description, color });
+
+        try {
+            const params = new URLSearchParams();
+            params.append('name', name);
+            if (description) params.append('description', description);
+            if (color) params.append('color', color);
+
+            const response = await fetch('/api/events?' + params.toString(), {
+                method: 'POST'
+            });
+
+            console.log('📡 Статус ответа:', response.status);
+
+            if (response.ok) {
+                const data = await response.json();
+                console.log('✅ Событие создано:', data);
+
+                // Закрываем модальное окно
+                closeEventModal();
+
+                // Обновляем список событий
+                await loadEvents();
+
+                // Обновляем выпадающие списки
+                updateEventSelects();
+
+                alert('✅ Событие "' + name + '" создано!');
+            } else {
+                const error = await response.json();
+                console.error('❌ Ошибка сервера:', error);
+                alert('Ошибка: ' + (error.detail || 'неизвестная ошибка'));
+            }
+        } catch (error) {
+            console.error('❌ Ошибка соединения:', error);
+            alert('Ошибка соединения с сервером');
+        }
+    }
+
+    // ===== ОБРАБОТЧИК КНОПКИ "СОЗДАТЬ" =====
+    document.addEventListener('DOMContentLoaded', function() {
+        const createBtn = document.getElementById('createEventBtn');
+        if (createBtn) {
+            createBtn.addEventListener('click', createEventFromModal);
+            console.log('✅ Обработчик кнопки "Создать" установлен');
+        } else {
+            console.error('❌ Кнопка #createEventBtn не найдена!');
+        }
+
+        // Закрытие по ESC
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeEventModal();
+            }
+        });
+
+        // Закрытие по клику вне модального окна
+        const modal = document.getElementById('eventModal');
+        if (modal) {
+            modal.addEventListener('click', function(e) {
+                if (e.target === this) {
+                    closeEventModal();
+                }
+            });
+        }
+    });
+
+    // ===== КАСТОМНЫЙ ВЫБОР СОБЫТИЯ =====
+    function renderEventDropdown() {
+        // Для формы добавления
+        const dropdown = document.getElementById('eventDropdown');
+        if (dropdown) {
+            dropdown.innerHTML = `
+                <div style="padding: 8px 12px; cursor: pointer; border-radius: 6px; transition: background 0.2s; color: #888;" onclick="selectEvent(null)">
+                    Без события
+                </div>
+            `;
+            allEvents.forEach(event => {
+                const div = document.createElement('div');
+                div.style.cssText = `
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    padding: 8px 12px;
+                    cursor: pointer;
+                    border-radius: 6px;
+                    transition: background 0.2s;
+                `;
+                div.onmouseover = () => { div.style.background = '#f0f2f5'; };
+                div.onmouseout = () => { div.style.background = 'transparent'; };
+                div.onclick = () => { selectEvent(event.id); };
+                div.innerHTML = `
+                    <span style="
+                        display: inline-block;
+                        width: 16px;
+                        height: 16px;
+                        border-radius: 4px;
+                        background: ${event.color || '#667eea'};
+                        flex-shrink: 0;
+                    "></span>
+                    <span style="font-weight: 500; color: #333;">${event.name}</span>
+                `;
+                dropdown.appendChild(div);
+            });
+        }
+
+        // Для формы редактирования
+        const editDropdown = document.getElementById('editEventDropdown');
+        if (editDropdown) {
+            editDropdown.innerHTML = `
+                <div style="padding: 8px 12px; cursor: pointer; border-radius: 6px; transition: background 0.2s; color: #888;" onclick="selectEditEvent(null)">
+                    Без события
+                </div>
+            `;
+            allEvents.forEach(event => {
+                const div = document.createElement('div');
+                div.style.cssText = `
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    padding: 8px 12px;
+                    cursor: pointer;
+                    border-radius: 6px;
+                    transition: background 0.2s;
+                `;
+                div.onmouseover = () => { div.style.background = '#f0f2f5'; };
+                div.onmouseout = () => { div.style.background = 'transparent'; };
+                div.onclick = () => { selectEditEvent(event.id); };
+                div.innerHTML = `
+                    <span style="
+                        display: inline-block;
+                        width: 16px;
+                        height: 16px;
+                        border-radius: 4px;
+                        background: ${event.color || '#667eea'};
+                        flex-shrink: 0;
+                    "></span>
+                    <span style="font-weight: 500; color: #333;">${event.name}</span>
+                `;
+                editDropdown.appendChild(div);
+            });
+        }
+    }
+
+    // ===== ВЫБОР СОБЫТИЯ (форма добавления) =====
+    function selectEvent(eventId) {
+        const display = document.getElementById('eventSelectDisplay');
+        const hidden = document.getElementById('eventSelect');
+        const dropdown = document.getElementById('eventDropdown');
+
+        hidden.value = eventId || '';
+        if (eventId) {
+            const event = allEvents.find(e => e.id === eventId);
+            if (event) {
+                display.innerHTML = `
+                    <span style="
+                        display: inline-block;
+                        width: 16px;
+                        height: 16px;
+                        border-radius: 4px;
+                        background: ${event.color || '#667eea'};
+                        flex-shrink: 0;
+                    "></span>
+                    <span style="font-weight: 500; color: #333;">${event.name}</span>
+                `;
+                display.style.borderColor = event.color || '#667eea';
+                display.style.backgroundColor = (event.color || '#667eea') + '15';
+            }
+        } else {
+            display.innerHTML = `<span style="color: #888;">Выберите событие</span>`;
+            display.style.borderColor = '#e0e0e0';
+            display.style.backgroundColor = 'white';
+        }
+        dropdown.style.display = 'none';
+    }
+
+    // ===== ВЫБОР СОБЫТИЯ (форма редактирования) =====
+    function selectEditEvent(eventId) {
+        const display = document.getElementById('editEventSelectDisplay');
+        const hidden = document.getElementById('editEventSelect');
+        const dropdown = document.getElementById('editEventDropdown');
+
+        hidden.value = eventId || '';
+        if (eventId) {
+            const event = allEvents.find(e => e.id === eventId);
+            if (event) {
+                display.innerHTML = `
+                    <span style="
+                        display: inline-block;
+                        width: 16px;
+                        height: 16px;
+                        border-radius: 4px;
+                        background: ${event.color || '#667eea'};
+                        flex-shrink: 0;
+                    "></span>
+                    <span style="font-weight: 500; color: #333;">${event.name}</span>
+                `;
+                display.style.borderColor = event.color || '#667eea';
+                display.style.backgroundColor = (event.color || '#667eea') + '15';
+            }
+        } else {
+            display.innerHTML = `<span style="color: #888;">Выберите событие</span>`;
+            display.style.borderColor = '#e0e0e0';
+            display.style.backgroundColor = 'white';
+        }
+        dropdown.style.display = 'none';
+    }
+
+    // ===== ОТКРЫТИЕ/ЗАКРЫТИЕ ВЫПАДАЮЩИХ СПИСКОВ =====
+    document.addEventListener('DOMContentLoaded', function() {
+        // Форма добавления
+        const display = document.getElementById('eventSelectDisplay');
+        if (display) {
+            display.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const dropdown = document.getElementById('eventDropdown');
+                const isOpen = dropdown.style.display === 'block';
+                dropdown.style.display = isOpen ? 'none' : 'block';
+            });
+        }
+
+        // Форма редактирования
+        const editDisplay = document.getElementById('editEventSelectDisplay');
+        if (editDisplay) {
+            editDisplay.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const dropdown = document.getElementById('editEventDropdown');
+                const isOpen = dropdown.style.display === 'block';
+                dropdown.style.display = isOpen ? 'none' : 'block';
+            });
+        }
+
+        // Закрытие по клику вне
+        document.addEventListener('click', function() {
+            const dd1 = document.getElementById('eventDropdown');
+            const dd2 = document.getElementById('editEventDropdown');
+            if (dd1) dd1.style.display = 'none';
+            if (dd2) dd2.style.display = 'none';
+        });
+    });
+
+    // ===== ОБНОВЛЕНИЕ КАСТОМНОГО ВЫБОРА =====
+    function updateEventSelects() {
+        const selects = ['eventSelect', 'editEventSelect'];
+        const badgeIds = ['eventCountBadge', 'editEventCountBadge'];
+
+        // Обновляем выпадающие списки
+        selects.forEach((selectId, index) => {
+            const select = document.getElementById(selectId);
+            if (!select) return;
+
+            const currentValue = select.value;
+            select.innerHTML = '<option value="">Без события</option>';
+
+            allEvents.forEach(event => {
+                const option = document.createElement('option');
+                option.value = event.id;
+                option.textContent = event.name;
+                option.style.color = event.color || '#667eea';
+                option.style.fontWeight = '500';
+                select.appendChild(option);
+            });
+
+            if (currentValue) {
+                select.value = currentValue;
+            }
+        });
+
+        // Обновляем бейджи
+        const badge1 = document.getElementById('eventCountBadge');
+        const badge2 = document.getElementById('editEventCountBadge');
+        if (badge1) badge1.textContent = allEvents.length;
+        if (badge2) badge2.textContent = allEvents.length;
+
+        // Обновляем кастомный выбор
+        renderEventDropdown();
+    }
+
     // ===== РЕДАКТИРОВАНИЕ =====
     async function startEdit(id) {
         editingId = id;
@@ -1684,11 +2304,16 @@
 
             // Добавляем дату в форму редактирования
             const editDateInput = document.getElementById('editDate');
-            if (editDateInput) {
-                // Преобразуем дату из формата ISO в YYYY-MM-DD
+            if (editDateInput && transaction.date) {
                 const dateObj = new Date(transaction.date);
-                const formattedDate = dateObj.toISOString().split('T')[0];
-                editDateInput.value = formattedDate;
+                if (!isNaN(dateObj.getTime())) {
+                    editDateInput.value = dateObj.toISOString().split('T')[0];
+                }
+            }
+
+            const editEventSelect = document.getElementById('editEventSelect');
+            if (editEventSelect) {
+                editEventSelect.value = transaction.event_id || '';
             }
 
             document.getElementById('editFormContainer').classList.remove('hidden');
@@ -1716,7 +2341,7 @@
         const amount = parseFloat(document.getElementById('editAmount').value);
         const category = document.getElementById('editCategory').value;
         const description = document.getElementById('editDescription').value;
-        const editDate = document.getElementById('editDate').value; // <-- ДОБАВЛЯЕМ
+        const editDate = document.getElementById('editDate').value;
 
         // Проверяем, что дата выбрана
         if (!editDate) {
@@ -1728,7 +2353,9 @@
         params.append('amount', amount);
         params.append('category', category);
         if (description) params.append('description', description);
-        params.append('date', editDate); // <-- ДОБАВЛЯЕМ ДАТУ
+        if (editDate) params.append('date', editDate);
+        if (editEventId) params.append('event_id', editEventId);
+
 
         try {
             const response = await fetch(`/api/transactions/${editingId}?` + params.toString(), {
@@ -1851,6 +2478,39 @@
         });
     });
 
+    // ===== ПОДСВЕТКА ВЫБРАННОГО СОБЫТИЯ =====
+    document.addEventListener('DOMContentLoaded', function() {
+        // Для формы добавления
+        const eventSelect = document.getElementById('eventSelect');
+        if (eventSelect) {
+            eventSelect.addEventListener('change', function() {
+                const selected = this.options[this.selectedIndex];
+                if (selected.value) {
+                    this.style.borderColor = selected.style.color || '#667eea';
+                    this.style.backgroundColor = selected.style.color + '15';
+                } else {
+                    this.style.borderColor = '#e0e0e0';
+                    this.style.backgroundColor = 'white';
+                }
+            });
+        }
+
+        // Для формы редактирования
+        const editEventSelect = document.getElementById('editEventSelect');
+        if (editEventSelect) {
+            editEventSelect.addEventListener('change', function() {
+                const selected = this.options[this.selectedIndex];
+                if (selected.value) {
+                    this.style.borderColor = selected.style.color || '#667eea';
+                    this.style.backgroundColor = selected.style.color + '15';
+                } else {
+                    this.style.borderColor = '#e0e0e0';
+                    this.style.backgroundColor = 'white';
+                }
+            });
+        }
+    });
+
     // Устанавливаем начальные даты для кастомного периода
     const today = new Date();
     const weekAgo = new Date(today);
@@ -1862,9 +2522,33 @@
     (async function init() {
         const isAuth = await checkAuth();
         if (isAuth) {
+            await loadEvents();
             applyPeriod('week');
         }
     })();
 </script>
+
+<!-- Модальное окно создания события -->
+<div id="eventModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; justify-content: center; align-items: center;">
+    <div class="modal-content" style="background: white; padding: 30px; border-radius: 15px; max-width: 450px; width: 90%;">
+        <h3>📝 Создать событие</h3>
+        <div class="form-group">
+            <label>Название</label>
+            <input type="text" id="eventName" placeholder="Например: Поездка в Париж" style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px;">
+        </div>
+        <div class="form-group">
+            <label>Описание (необязательно)</label>
+            <input type="text" id="eventDescription" placeholder="Краткое описание события" style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px;">
+        </div>
+        <div class="form-group">
+            <label>Цвет</label>
+            <input type="color" id="eventColor" value="#667eea" style="width: 100%; padding: 5px; border: 2px solid #e0e0e0; border-radius: 8px; cursor: pointer;">
+        </div>
+        <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 15px;">
+            <button onclick="closeEventModal()" style="padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; background: #e0e0e0; color: #555;">Отмена</button>
+            <button id="createEventBtn" style="padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; background: #667eea; color: white;">Создать</button>
+        </div>
+    </div>
+</div>
 </body>
 </html>

@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>События - Финансовый учёт</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f0f2f5;
+            color: #333;
+            padding: 20px;
+        }
+
+        .container { max-width: 1200px; margin: 0 auto; }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 { font-size: 32px; }
+
+        .back-link {
+            color: white;
+            text-decoration: none;
+            background: rgba(255,255,255,0.2);
+            padding: 10px 20px;
+            border-radius: 8px;
+            transition: background 0.3s;
+        }
+
+        .back-link:hover { background: rgba(255,255,255,0.3); }
+
+        .btn-create {
+            padding: 10px 25px;
+            background: #2ecc71;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .btn-create:hover { background: #27ae60; }
+
+        .events-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .event-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            border-left: 5px solid #667eea;
+            transition: transform 0.2s, box-shadow 0.2s;
+            cursor: pointer;
+        }
+
+        .event-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+        }
+
+        .event-card h3 {
+            margin-bottom: 8px;
+            font-size: 20px;
+        }
+
+        .event-card .event-meta {
+            color: #888;
+            font-size: 14px;
+            margin: 5px 0;
+        }
+
+        .event-card .event-count {
+            color: #888;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+
+        .event-empty {
+            text-align: center;
+            padding: 60px 20px;
+            color: #888;
+            grid-column: 1 / -1;
+        }
+
+        .event-empty .icon { font-size: 60px; margin-bottom: 15px; }
+
+        .event-empty .btn {
+            margin-top: 15px;
+            padding: 10px 30px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .event-empty .btn:hover { background: #5a67d8; }
+
+        .header-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        @media (max-width: 768px) {
+            .header { flex-direction: column; gap: 15px; text-align: center; }
+            .header-actions { flex-wrap: wrap; justify-content: center; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏷️ События</h1>
+            <div class="header-actions">
+                <button class="btn-create" onclick="openEventModal()">➕ Создать событие</button>
+                <a href="/" class="back-link">← На главную</a>
+            </div>
+        </div>
+
+        <div id="eventsContainer">
+            <div class="event-empty">
+                <div class="icon">📂</div>
+                <h3>Загрузка...</h3>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно -->
+    <div id="eventModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; justify-content: center; align-items: center;">
+        <div class="modal-content" style="background: white; padding: 30px; border-radius: 15px; max-width: 450px; width: 90%;">
+            <h3>Создать событие</h3>
+            <div class="form-group" style="margin-bottom: 15px;">
+                <label style="display: block; margin-bottom: 5px; font-weight: 500;">Название</label>
+                <input type="text" id="eventName" placeholder="Например: Поездка в Париж" style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px;">
+            </div>
+            <div class="form-group" style="margin-bottom: 15px;">
+                <label style="display: block; margin-bottom: 5px; font-weight: 500;">Описание (необязательно)</label>
+                <input type="text" id="eventDescription" placeholder="Краткое описание" style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px;">
+            </div>
+            <div class="form-group" style="margin-bottom: 15px;">
+                <label style="display: block; margin-bottom: 5px; font-weight: 500;">Цвет</label>
+                <input type="color" id="eventColor" value="#667eea" style="width: 100%; padding: 5px; border: 2px solid #e0e0e0; border-radius: 8px; cursor: pointer; height: 45px;">
+            </div>
+            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                <button onclick="closeEventModal()" style="padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; background: #e0e0e0; color: #555;">Отмена</button>
+                <button id="createEventBtn" style="padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; background: #667eea; color: white;">Создать</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ===== ПЕРЕМЕННЫЕ =====
+        let allEvents = [];
+
+        // ===== ЗАГРУЗКА СОБЫТИЙ =====
+        async function loadEvents() {
+            try {
+                const response = await fetch('/api/events');
+                if (response.ok) {
+                    allEvents = await response.json();
+                    console.log('📋 Загружено событий:', allEvents.length);
+                    renderEvents();
+                } else {
+                    console.error('❌ Ошибка загрузки событий:', response.status);
+                    document.getElementById('eventsContainer').innerHTML = `
+                        <div class="event-empty">
+                            <div class="icon">❌</div>
+                            <h3>Ошибка загрузки</h3>
+                            <p>Не удалось загрузить события. Попробуйте позже.</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('❌ Ошибка загрузки событий:', error);
+                document.getElementById('eventsContainer').innerHTML = `
+                    <div class="event-empty">
+                        <div class="icon">❌</div>
+                        <h3>Ошибка соединения</h3>
+                        <p>Проверьте подключение к серверу.</p>
+                    </div>
+                `;
+            }
+        }
+
+        // ===== ОТРИСОВКА СОБЫТИЙ =====
+        function renderEvents() {
+            const container = document.getElementById('eventsContainer');
+
+            if (allEvents.length === 0) {
+                container.innerHTML = `
+                    <div class="event-empty">
+                        <div class="icon">📂</div>
+                        <h3>Нет событий</h3>
+                        <p>Создайте первое событие, чтобы группировать траты</p>
+                        <button class="btn" onclick="openEventModal()">Создать событие</button>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = '<div class="events-grid">';
+
+            allEvents.forEach(event => {
+                html += `
+                    <div class="event-card" style="border-left-color: ${event.color || '#667eea'}; position: relative;">
+                        <div onclick="goToEvent(${event.id})" style="cursor: pointer;">
+                            <h3 style="color: ${event.color || '#667eea'}">${event.name}</h3>
+                            <div class="event-meta">${event.description || 'Без описания'}</div>
+                            <div class="event-count">${new Date(event.created_at).toLocaleDateString('ru-RU')}</div>
+                        </div>
+                        <button onclick="deleteEvent(${event.id})" style="
+                            position: absolute;
+                            top: 12px;
+                            right: 12px;
+                            background: #667eea;
+                            color: white;
+                            border: none;
+                            border-radius: 50%;
+                            width: 30px;
+                            height: 30px;
+                            font-size: 16px;
+                            cursor: pointer;
+                            transition: background 0.2s, transform 0.2s;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                        " onmouseover="this.style.background='#c0392b'; this.style.transform='scale(1.1)'" onmouseout="this.style.background='#e74c3c'; this.style.transform='scale(1)'">
+                            ✕
+                        </button>
+                    </div>
+                `;
+            });
+
+            html += '</div>';
+            container.innerHTML = html;
+        }
+
+        // ===== ПЕРЕЙТИ НА СТРАНИЦУ СОБЫТИЯ =====
+        function goToEvent(eventId) {
+            window.location.href = `/event/${eventId}`;
+        }
+
+        // ===== МОДАЛЬНОЕ ОКНО =====
+        function openEventModal() {
+            document.getElementById('eventModal').style.display = 'flex';
+        }
+
+        function closeEventModal() {
+            document.getElementById('eventModal').style.display = 'none';
+            document.getElementById('eventName').value = '';
+            document.getElementById('eventDescription').value = '';
+        }
+
+        // ===== УДАЛИТЬ СОБЫТИЕ =====
+        async function deleteEvent(eventId) {
+            // Находим название события для сообщения
+            const event = allEvents.find(e => e.id === eventId);
+            if (!event) return;
+
+            // Подтверждение удаления
+            if (!confirm(`Вы уверены, что хотите удалить событие "${event.name}"?\n\nВсе транзакции, привязанные к этому событию, останутся, но потеряют связь с ним.`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/events/${eventId}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    alert(`✅ Событие "${event.name}" удалено`);
+                    await loadEvents(); // Перезагружаем список
+                } else {
+                    const error = await response.json();
+                    alert('Ошибка: ' + (error.detail || 'неизвестная ошибка'));
+                }
+            } catch (error) {
+                console.error('Ошибка удаления события:', error);
+                alert('Ошибка соединения с сервером');
+            }
+        }
+
+        // ===== СОЗДАНИЕ СОБЫТИЯ =====
+        async function createEventFromModal() {
+            const name = document.getElementById('eventName').value.trim();
+            const description = document.getElementById('eventDescription').value.trim();
+            const color = document.getElementById('eventColor').value;
+
+            if (!name) {
+                alert('Введите название события!');
+                return;
+            }
+
+            try {
+                const params = new URLSearchParams();
+                params.append('name', name);
+                if (description) params.append('description', description);
+                if (color) params.append('color', color);
+
+                const response = await fetch('/api/events?' + params.toString(), {
+                    method: 'POST'
+                });
+
+                if (response.ok) {
+                    closeEventModal();
+                    await loadEvents();
+                    alert('✅ Событие "' + name + '" создано!');
+                } else {
+                    const error = await response.json();
+                    alert('Ошибка: ' + (error.detail || 'неизвестная ошибка'));
+                }
+            } catch (error) {
+                console.error('Ошибка создания события:', error);
+                alert('Ошибка соединения с сервером');
+            }
+        }
+
+        // ===== ОБРАБОТЧИК КНОПКИ =====
+        document.addEventListener('DOMContentLoaded', function() {
+            const createBtn = document.getElementById('createEventBtn');
+            if (createBtn) {
+                createBtn.addEventListener('click', createEventFromModal);
+            }
+
+            // Закрытие по ESC
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    closeEventModal();
+                }
+            });
+
+            // Закрытие по клику вне модального окна
+            const modal = document.getElementById('eventModal');
+            if (modal) {
+                modal.addEventListener('click', function(e) {
+                    if (e.target === this) {
+                        closeEventModal();
+                    }
+                });
+            }
+
+            // Загрузка событий
+            loadEvents();
+        });
+    </script>
+</body>
+</html>
